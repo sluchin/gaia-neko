@@ -20,5 +20,7 @@
     <string name="close">閉じる</string>
     <string name="loading">読み込み中…</string>
     <string name="sighting_count">目撃数: %1$d</string>
+    <string name="sighting_details">位置: %1$s\n撮影者: %2$s\nID: %3$s</string>
+    <string name="unknown">不明</string>
     <string name="error">エラー: %1$s</string>
 </resources>

@@ -19,6 +19,7 @@ import jp.gaianeko.core.S3PhotoStore
 import jp.gaianeko.core.SessionManager
 import jp.gaianeko.core.SightingUploader
 import jp.gaianeko.core.UserPoolAuth
+import jp.gaianeko.core.idTokenEmail
 
 /**
  * ログインに使うものを, まとめて作る (設定は, BuildConfig. local.properties から).
@@ -64,6 +65,7 @@ class AuthStack(
             S3PhotoStore(s3, BuildConfig.BUCKET_NAME),
             DynamoDbSightingStore(dynamoDb, BuildConfig.TABLE_NAME),
             credentials::identityId,
+            { manager.session?.idToken?.let(::idTokenEmail) },
         )
 
     /** 全員の目撃を読み出す (管理者のロールの認証情報のときだけ, 読める). */

@@ -13,11 +13,13 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import jp.gaianeko.core.PhotoSource
 import jp.gaianeko.core.Sighting
 import jp.gaianeko.core.SightingSource
 import jp.gaianeko.core.boundsOf
+import jp.gaianeko.core.formatPoint
 import jp.gaianeko.core.formatTakenAt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -184,11 +186,33 @@ class AdminMapScreen(
         sighting: Sighting,
         jpeg: ByteArray,
     ) {
+        val details =
+            TextView(context).apply {
+                text =
+                    context.getString(
+                        R.string.sighting_details,
+                        formatPoint(sighting.point),
+                        sighting.photographer ?: context.getString(R.string.unknown),
+                        sighting.userId,
+                    )
+                setPadding(
+                    context.dp(GAP_DP * 2),
+                    context.dp(GAP_DP),
+                    context.dp(GAP_DP * 2),
+                    context.dp(GAP_DP),
+                )
+            }
         val image = ImageView(context).apply { setImageBitmap(decodePhoto(jpeg, PHOTO_MAX_PX)) }
+        val content =
+            LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(details)
+                addView(image)
+            }
         AlertDialog
             .Builder(context)
             .setTitle(formatTakenAt(sighting.takenAt, ZoneId.systemDefault()))
-            .setView(image)
+            .setView(content)
             .setPositiveButton(R.string.close, null)
             .show()
     }
