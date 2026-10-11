@@ -91,15 +91,15 @@ class UserPoolAuth(
     /**
      * 更新トークンで, ID トークンとアクセストークンを取り直す.
      *
-     * @param session 今のトークン
+     * @param refreshToken 更新トークン
      * @return 新しいトークン (更新トークンは, 今のものを引き継ぐ)
      * @throws IllegalStateException 応答に, 必要な項目がないとき
      */
-    suspend fun refresh(session: Session): Session =
+    suspend fun refresh(refreshToken: String): Session =
         authenticate(
             AuthFlowType.RefreshTokenAuth,
-            mapOf(PARAM_REFRESH_TOKEN to session.refreshToken),
-            session.refreshToken,
+            mapOf(PARAM_REFRESH_TOKEN to refreshToken),
+            refreshToken,
         )
 
     /**

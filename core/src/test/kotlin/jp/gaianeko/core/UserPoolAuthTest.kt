@@ -122,7 +122,7 @@ class UserPoolAuthTest {
             coEvery { client.initiateAuth(capture(request)) } returns
                 InitiateAuthResponse { authenticationResult = tokens(id = "id2", refresh = null) }
 
-            val session = auth.refresh(Session("id", "access", "refresh", 1))
+            val session = auth.refresh("refresh")
 
             assertEquals(Session("id2", "access", "refresh", NOW + EXPIRES_IN), session)
             assertEquals(AuthFlowType.RefreshTokenAuth, request.captured.authFlow)
