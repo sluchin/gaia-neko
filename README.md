@@ -42,6 +42,10 @@ Android アプリ ─ 写真 ─────────────────
 | `takenAt` | 撮影した時刻 (UNIX 時刻 (s)) |
 | `photoKey` | S3 のキー (`photos/<利用者の ID>/<id>.jpg`) |
 
+## 言語
+
+画面は、端末の言語が日本語なら日本語、それ以外は英語で表示します (`app/src/main/res/values/strings.xml` と `values-ja/strings.xml`)。AWS が返すエラーのメッセージは、英語のままです。
+
 ## 作る順番
 
 1. [x] ビルドの土台 (Docker、Gradle、CI、整形、静的解析、テスト、カバレッジ 100%。[thermon](https://github.com/sluchin/thermon) と同じ)
