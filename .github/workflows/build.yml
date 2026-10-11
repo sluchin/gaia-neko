@@ -1,7 +1,7 @@
 name: CI
 
 # 開発環境 (Dockerfile) と同じイメージで, docker compose のサービスを実行する.
-#   build   : デバッグ用の APK のビルド. 警告が出たら失敗する. ログを artifact に保存する (APK は, 保存しない)
+#   build   : デバッグ用の APK のビルド. 警告が出たら失敗する. ログと APK (デバッグ用. デバッグ鍵で署名) を artifact に保存する
 #   test    : 単体テスト. ログを artifact に保存する
 #   coverage: core の行と分岐のカバレッジが 100% であること. ログを artifact に保存する
 #   format  : 整形の確認 (ktlint). 指摘があれば失敗する. ログを artifact に保存する
@@ -49,6 +49,15 @@ jobs:
           name: ${{ matrix.service }}_log
           path: ${{ runner.temp }}/${{ matrix.service }}.log
           if-no-files-found: warn
+          retention-days: 3
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        if: matrix.service == 'build' && success()
+        with:
+          name: gaia_neko_apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
           retention-days: 3
 
   docs:
