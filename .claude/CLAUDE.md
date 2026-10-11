@@ -51,8 +51,8 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 ## プロジェクト構成
 
-- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、トークン (`Session`。管理者かの判定 `isAdmin` は、画面の出し分けだけに使う)。AWS のクライアントは、引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
-- `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは、`SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは、`core` に置く (UI は、単体テストの対象外)。
+- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、トークン (`Session`。管理者かの判定 `isAdmin` は、画面の出し分けだけに使う)。AWS のクライアントは、引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
+- `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは、`SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`、`HomeScreen`、管理者の地図 `AdminMapScreen`)。地図は osmdroid (OpenStreetMap)。OpenStreetMap のタイルサーバーには、利用ポリシーがある (大量のアクセスを避ける。`userAgentValue` を設定する) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは、`core` に置く (UI は、単体テストの対象外)。
 - `gradle/libs.versions.toml`: ライブラリとプラグインの版 (版カタログ)。版を変えるときは、ここだけ。
 - `config/detekt/detekt.yml`: detekt の規則 (既定に、上書きするものだけ)。
 - `Dockerfile` (2 段: dev と emulator) / `docker-compose.yml` / `scripts/`: 開発環境 (thermon と同じ)。`.github/`: GitHub Actions。`SETUP.md`: 環境構築。`README.md`: 設計。
@@ -92,7 +92,7 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
 
 1. 機能開発は、`ccr-*` ブランチで行う。
 2. Push 時に GitHub Actions (`.github/workflows/build.yml`) が、開発用の Docker イメージ (ローカルと同じ環境) で、`docker compose` のサービスを実行する (`SETUP.md` の「CI (GitHub Actions)」)。
-   - `check` ジョブ: `build` / `test` / `coverage` / `format` / `analyze` を、サービスごとに実行する。失敗したら、ジョブが失敗する。実行のログを、アーティファクト (`<サービス名>_log`。`build_log` など) として保存する (失敗したときも保存する)。**APK は、アーティファクトに置かない。**
+   - `check` ジョブ: `build` / `test` / `coverage` / `format` / `analyze` を、サービスごとに実行する。失敗したら、ジョブが失敗する。実行のログを、アーティファクト (`<サービス名>_log`。`build_log` など) として保存する (失敗したときも保存する)。`build` のときは、デバッグ用の APK (`app/build/outputs/apk/debug/app-debug.apk`。デバッグ鍵で署名) も、アーティファクト `gaia_neko_apk` として保存する (成功したときだけ)。リリース用の署名の鍵 (`*.jks`、`*.keystore`) は、リポジトリにも、CI にも、置かない。
    - `docs` ジョブ: `docs` (Dokka の HTML。警告があれば失敗する)。生成したドキュメントを、アーティファクト `docs` と、ログ `docs_log` に保存する。
    - `deploy-docs` ジョブ: main への push のときだけ、ドキュメントを GitHub Pages に公開する (リポジトリの Settings > Pages > Source を「GitHub Actions」にしておく)。
    - `cleanup` ジョブ: 3 日より前の実行 (ログと artifact) を、push のたびに削除する (権限は `actions: write`)。artifact は、`retention-days: 3` で、3 日で期限が切れる。保存する期間を変えるときは、`build.yml` の `KEEP_DAYS` と、全ての `retention-days` を、そろえて変える。

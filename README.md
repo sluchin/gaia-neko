@@ -48,8 +48,8 @@ Android アプリ ─ 写真 ─────────────────
 2. [x] `core`: 位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、目撃 (`Sighting`)
 3. [x] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 ([AWS_SETUP.md](AWS_SETUP.md))
 4. [x] 利用者のログイン (Cognito)。`core`: `UserPoolAuth` (登録、確認、ログイン、更新)、`SessionManager` (ログインの状態。更新トークンで、開き直したときに、ログインを飛ばす)、`CognitoLoginCredentials` (ID プールの認証情報)、`Session.isAdmin` (管理者の判定)。`app`: ログインの画面 (メールアドレス、パスワード、登録、確認コード)。更新トークンは、Android Keystore の鍵で暗号化して保存する。実際の Cognito での動作は、`AWS_SETUP.md` の手順で AWS を作ってから、確認する
-5. [ ] 撮影と保存 (カメラ、Exif の GPS、S3 と DynamoDB への書き込み)
-6. [ ] 管理者のマップ (分布の表示、ピンから写真の取得)
+5. [x] 撮影と保存。`core`: `SightingUploader` (写真を S3 に先に保存して、目撃を DynamoDB に保存する)。`app`: カメラのアプリを起動して撮影、写真の Exif の GPS (なければ、端末の最後の位置)、位置の権限
+6. [x] 管理者のマップ。`core`: `DynamoDbSightingSource` (全員の目撃を読む)、`S3PhotoSource` (写真を読む)、`boundsOf` (全てが見える範囲)。`app`: OpenStreetMap の地図 (osmdroid。API キーは要らない) に、ピンで表示して、ピンを押すと写真を取得する。管理者 (グループ `admin`) だけに、ボタンが出る。読み取りの権限は、IAM のロールが決める (利用者は、読めない)。実際の AWS、カメラ、地図の表示は、実機で確認する
 
 ## 開発環境
 

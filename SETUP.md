@@ -56,4 +56,4 @@ gaianeko.bucket=<バケット名>
 
 ## 6. CI (GitHub Actions)
 
-push のたびに、`.github/workflows/build.yml` が、`build` / `test` / `coverage` / `format` / `analyze` / `docs` を、実行します。
+push のたびに、`.github/workflows/build.yml` が、`build` / `test` / `coverage` / `format` / `analyze` / `docs` を、実行します。`build` が成功すると、デバッグ用の APK を、アーティファクト `gaia_neko_apk` に保存します (3 日で期限が切れます。Actions の実行の画面から、ダウンロードできます)。
