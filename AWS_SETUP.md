@@ -144,7 +144,7 @@ aws iam put-role-policy --role-name gaia-neko-user --policy-name put-own \
 - `\${cognito-identity.amazonaws.com:sub}` は、IAM の変数で、ログインした本人の ID プールの ID に置き換わります (シェルでは、`\` を付けて、そのまま JSON に書きます)。
 - 利用者は、**自分の** `photos/<自分の ID>/` の下にだけ、写真を置けて、**自分の** `userId` のパーティションにだけ、書けます。**読み取り (`GetObject`、`Query`、`Scan`) の権限は、ありません。**
 
-### 5.3 管理者のロール (読み取りと、自分の投稿)
+### 5.3 管理者のロール (読み取り、削除、自分の投稿)
 
 ```bash
 cat > aws-admin.json <<EOF
@@ -154,13 +154,13 @@ cat > aws-admin.json <<EOF
     {
       "Sid": "ReadSightings",
       "Effect": "Allow",
-      "Action": [ "dynamodb:Scan", "dynamodb:Query", "dynamodb:GetItem" ],
+      "Action": [ "dynamodb:Scan", "dynamodb:Query", "dynamodb:GetItem", "dynamodb:DeleteItem" ],
       "Resource": "arn:aws:dynamodb:ap-northeast-1:${ACCOUNT_ID}:table/${TABLE}"
     },
     {
-      "Sid": "GetPhotos",
+      "Sid": "GetAndDeletePhotos",
       "Effect": "Allow",
-      "Action": "s3:GetObject",
+      "Action": [ "s3:GetObject", "s3:DeleteObject" ],
       "Resource": "arn:aws:s3:::${BUCKET}/photos/*"
     }
   ]
@@ -179,7 +179,7 @@ aws iam put-role-policy --role-name gaia-neko-admin --policy-name put-own \
 
 - 管理者は、グループ `admin` に入ると、**利用者のロールではなく、管理者のロールだけ**になります (ロールは、1 つだけ引き受けるため)。管理者も、猫を撮影して、投稿できるように、管理者のロールにも、利用者と同じ書き込みの権限 (`put-own`) を付けます。付けないと、管理者の投稿が、`s3:PutObject` の `AccessDenied` になります。
 
-- 管理者は、全員の目撃 (`Scan`) と、写真 (`GetObject`) を、読めます。書き込みは、利用者と同じく、自分の分だけです (`put-own`)。写真は、アプリが、S3 から直接ダウンロードして、表示します (署名付き URL は、使いません)。
+- 管理者は、全員の目撃 (`Scan`) と、写真 (`GetObject`) を、読めます。また、目撃 (`DeleteItem`) と、写真 (`DeleteObject`) を、削除できます (アプリで、地図のピンの写真を長押しして、削除します)。書き込みは、利用者と同じく、自分の分だけです (`put-own`)。写真は、アプリが、S3 から直接ダウンロードして、表示します (署名付き URL は、使いません)。
 
 ## 6. ID プールにロールを結びつけて、管理者のグループを作る
 
