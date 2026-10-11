@@ -24,7 +24,7 @@ private const val CONTENT_PADDING_DP = 16
  *
  * @receiver 画面の最も外側の View
  */
-fun ScrollView.applySystemBarInsets() {
+fun View.applySystemBarInsets() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
         return
     }

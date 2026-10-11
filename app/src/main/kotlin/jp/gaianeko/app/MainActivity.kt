@@ -100,6 +100,9 @@ class MainActivity : Activity() {
     /**
      * 管理者の地図の画面を表示する (閉じると, ログインしたあとの画面に戻る).
      *
+     * 地図は, スクロールする画面 (ScrollView) の中に置くと, 高さが 0 になって, 表示されない. また, 地図の
+     * 操作 (ドラッグ) と, 画面のスクロールが, 競合する. そのため, 画面全体を, 地図の画面に差し替える.
+     *
      * @param session トークン
      */
     private fun showMap(session: Session) {
@@ -108,10 +111,12 @@ class MainActivity : Activity() {
             AdminMapScreen(this, scope, authStack.sightings, authStack.photos) {
                 map?.onDestroy()
                 map = null
+                setContentView(root)
                 showHome(session)
             }
         map = screen
-        root.showContent(screen.view)
+        screen.view.applySystemBarInsets()
+        setContentView(screen.view)
         screen.load()
     }
 
