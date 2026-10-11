@@ -28,7 +28,7 @@ Android アプリ ─ 写真 ─────────────────
 | 役割 | S3 | DynamoDB |
 |:---|:---|:---|
 | 利用者 | `PutObject` (自分の `photos/<自分の ID>/` だけ) | `PutItem` (パーティションキー `userId` が自分の分だけ) |
-| 管理者 | `GetObject` | `Query` / `Scan` |
+| 管理者 | `GetObject`、`PutObject` (自分の `photos/<自分の ID>/` だけ) | `Query` / `Scan`、`PutItem` (自分の分だけ) |
 
 利用者のロールに、読み取りの権限を付けません。アクセスキーを、アプリやリポジトリに入れません (Cognito の一時的な認証情報だけを使います)。
 

@@ -61,7 +61,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 - 接続先 (`gaianeko.region`、`gaianeko.userPoolId`、`gaianeko.clientId`、`gaianeko.identityPoolId`、`gaianeko.table`、`gaianeko.bucket`) は、`local.properties` (コミットしない) か、Gradle のプロパティ (`-Pgaianeko.table=...`) で渡す。リポジトリに、実際の ID (アカウント ID、ユーザープール ID、ID プール ID など) や、実際の位置、写真を書かない (文書の例は、ダミーの値にする)。
 - **アクセスキーを、アプリや、リポジトリに入れない。** 必ず、Cognito の一時的な認証情報を使う。署名の鍵 (`*.jks`、`*.keystore`) も、コミットしない。
-- **権限の方針 (最小権限)**: 認証した利用者のロールは、S3 の写真の書き込み (`s3:PutObject`。自分の `photos/<自分の ID>/` だけ) と、DynamoDB の書き込み (`dynamodb:PutItem`) だけ。**読み取りの権限を付けない。** 管理者のグループのロールだけが、DynamoDB の `Query` / `Scan` と、S3 の `GetObject` を持つ。S3 のバケットは、公開しない (パブリックアクセスのブロック)。
+- **権限の方針 (最小権限)**: 認証した利用者のロールは、S3 の写真の書き込み (`s3:PutObject`。自分の `photos/<自分の ID>/` だけ) と、DynamoDB の書き込み (`dynamodb:PutItem`) だけ。**読み取りの権限を付けない。** 管理者のグループのロールだけが、DynamoDB の `Query` / `Scan` と、S3 の `GetObject` を持つ (管理者は、利用者のロールではなく、管理者のロールだけになるので、管理者のロールにも、利用者と同じ書き込み (自分の分だけ) を付ける)。S3 のバケットは、公開しない (パブリックアクセスのブロック)。
 - **位置と写真を、ログや、エラーのメッセージに出さない。** テストや文書の例の位置は、実在の場所を避けた、ダミーの値にする。
 
 ## コーディング規約
