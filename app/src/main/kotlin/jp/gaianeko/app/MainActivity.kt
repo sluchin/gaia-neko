@@ -108,7 +108,7 @@ class MainActivity : Activity() {
     private fun showMap(session: Session) {
         val authStack = checkNotNull(stack)
         val screen =
-            AdminMapScreen(this, scope, authStack.sightings, authStack.photos) {
+            AdminMapScreen(this, scope, authStack.sightings, authStack.photos, authStack.remover) {
                 map?.onDestroy()
                 map = null
                 setContentView(root)

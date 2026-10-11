@@ -22,5 +22,10 @@
     <string name="sighting_count">目撃数: %1$d</string>
     <string name="sighting_details">位置: %1$s\n撮影者: %2$s\nID: %3$s</string>
     <string name="unknown">不明</string>
+    <string name="photo_counter">%1$d / %2$d 枚目</string>
+    <string name="photo_hint">左右にスワイプすると、ほかの写真を見られます。写真を長押しすると、削除します。</string>
+    <string name="delete_confirm">この写真と記録を削除しますか？ 元に戻せません。</string>
+    <string name="delete">削除</string>
+    <string name="cancel">キャンセル</string>
     <string name="error">エラー: %1$s</string>
 </resources>

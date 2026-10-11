@@ -6,21 +6,19 @@
 
 package jp.gaianeko.app
 
-import android.app.AlertDialog
 import android.content.Context
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import jp.gaianeko.core.PhotoSource
 import jp.gaianeko.core.Sighting
+import jp.gaianeko.core.SightingGroup
+import jp.gaianeko.core.SightingRemover
 import jp.gaianeko.core.SightingSource
 import jp.gaianeko.core.boundsOf
-import jp.gaianeko.core.formatPoint
-import jp.gaianeko.core.formatTakenAt
+import jp.gaianeko.core.groupByPlace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,7 +30,6 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.io.File
-import java.time.ZoneId
 
 /** 最初に表示する, 地図の拡大率 (目撃がないとき). */
 private const val DEFAULT_ZOOM = 5.0
@@ -42,9 +39,6 @@ private const val MAX_ZOOM = 16.0
 
 /** 全ての目撃が入る範囲に合わせるときの, 余白 (px). */
 private const val BOUNDS_PADDING_PX = 100
-
-/** 写真の, 表示する大きさの目安 (px). */
-private const val PHOTO_MAX_PX = 1024
 
 /** 余白 (dp). */
 private const val GAP_DP = 8
@@ -58,6 +52,7 @@ private const val GAP_DP = 8
  * @property scope コルーチンのスコープ (画面のスレッドで動く)
  * @property sightings 目撃の読み出し
  * @property photos 写真の読み出し
+ * @property remover 目撃と写真の削除 (写真を長押しして, 削除する)
  * @param onClose 閉じるを押したとき
  */
 class AdminMapScreen(
@@ -65,10 +60,12 @@ class AdminMapScreen(
     private val scope: CoroutineScope,
     private val sightings: SightingSource,
     private val photos: PhotoSource,
+    private val remover: SightingRemover,
     onClose: () -> Unit,
 ) {
     private val map: MapView
     private val status = TextView(context)
+    private var total = 0
 
     /** 画面をまとめた View. */
     val view = FrameLayout(context)
@@ -135,23 +132,14 @@ class AdminMapScreen(
     }
 
     /**
-     * 目撃のピンを, 地図に置いて, 全てが見える位置に合わせる.
+     * 同じ場所の目撃を, 1 つのピンにして, 地図に置く (全てが見える位置に合わせる).
      *
      * @param all 目撃
      */
     private fun showPins(all: List<Sighting>) {
-        status.text = context.getString(R.string.sighting_count, all.size)
-        all.forEach { sighting ->
-            map.overlays.add(
-                Marker(map).apply {
-                    position = GeoPoint(sighting.point.latitude, sighting.point.longitude)
-                    setOnMarkerClickListener { _, _ ->
-                        showPhoto(sighting)
-                        true
-                    }
-                },
-            )
-        }
+        total = all.size
+        status.text = context.getString(R.string.sighting_count, total)
+        groupByPlace(all).forEach { group -> addPin(group) }
         boundsOf(all.map { it.point })?.let { b ->
             val box = BoundingBox(b.maxLatitude, b.maxLongitude, b.minLatitude, b.minLongitude)
             map.post { map.zoomToBoundingBox(box, false, BOUNDS_PADDING_PX, MAX_ZOOM, null) }
@@ -160,60 +148,25 @@ class AdminMapScreen(
     }
 
     /**
-     * ピンの写真を取得して, 撮影した時刻と一緒に, ダイアログで表示する.
+     * 同じ場所の目撃の, ピンを置く (タップすると, 写真を, 次々に見られる. 全て削除すると, ピンを消す).
      *
-     * @param sighting 目撃
+     * @param group 同じ場所の目撃
      */
-    private fun showPhoto(sighting: Sighting) {
-        status.text = context.getString(R.string.loading)
-        scope.launch {
-            val result =
-                runCatching { withContext(Dispatchers.IO) { photos.get(sighting.photoKey) } }
-            status.text = context.getString(R.string.sighting_count, map.overlays.size)
-            result
-                .onSuccess { show(sighting, it) }
-                .onFailure { status.text = context.getString(R.string.error, it.message) }
+    private fun addPin(group: SightingGroup) {
+        val sightings = group.sightings.toMutableList()
+        val marker = Marker(map)
+        marker.position = GeoPoint(group.point.latitude, group.point.longitude)
+        marker.setOnMarkerClickListener { _, _ ->
+            SightingDialog(context, scope, photos, remover, sightings) {
+                total--
+                status.text = context.getString(R.string.sighting_count, total)
+                if (sightings.isEmpty()) {
+                    map.overlays.remove(marker)
+                }
+                map.invalidate()
+            }.show()
+            true
         }
-    }
-
-    /**
-     * 写真と, 撮影した時刻を, ダイアログで表示する.
-     *
-     * @param sighting 目撃
-     * @param jpeg 写真の JPEG
-     */
-    private fun show(
-        sighting: Sighting,
-        jpeg: ByteArray,
-    ) {
-        val details =
-            TextView(context).apply {
-                text =
-                    context.getString(
-                        R.string.sighting_details,
-                        formatPoint(sighting.point),
-                        sighting.photographer ?: context.getString(R.string.unknown),
-                        sighting.userId,
-                    )
-                setPadding(
-                    context.dp(GAP_DP * 2),
-                    context.dp(GAP_DP),
-                    context.dp(GAP_DP * 2),
-                    context.dp(GAP_DP),
-                )
-            }
-        val image = ImageView(context).apply { setImageBitmap(decodePhoto(jpeg, PHOTO_MAX_PX)) }
-        val content =
-            LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                addView(details)
-                addView(image)
-            }
-        AlertDialog
-            .Builder(context)
-            .setTitle(formatTakenAt(sighting.takenAt, ZoneId.systemDefault()))
-            .setView(content)
-            .setPositiveButton(R.string.close, null)
-            .show()
+        map.overlays.add(marker)
     }
 }

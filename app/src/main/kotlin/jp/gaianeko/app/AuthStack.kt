@@ -17,6 +17,7 @@ import jp.gaianeko.core.DynamoDbSightingStore
 import jp.gaianeko.core.S3PhotoSource
 import jp.gaianeko.core.S3PhotoStore
 import jp.gaianeko.core.SessionManager
+import jp.gaianeko.core.SightingRemover
 import jp.gaianeko.core.SightingUploader
 import jp.gaianeko.core.UserPoolAuth
 import jp.gaianeko.core.idTokenEmail
@@ -59,14 +60,20 @@ class AuthStack(
             credentialsProvider = credentials
         }
 
+    private val photoStore = S3PhotoStore(s3, BuildConfig.BUCKET_NAME)
+    private val sightingStore = DynamoDbSightingStore(dynamoDb, BuildConfig.TABLE_NAME)
+
     /** 撮影した目撃を, S3 と DynamoDB に保存する (ログインした利用者の認証情報で). */
     val uploader =
         SightingUploader(
-            S3PhotoStore(s3, BuildConfig.BUCKET_NAME),
-            DynamoDbSightingStore(dynamoDb, BuildConfig.TABLE_NAME),
+            photoStore,
+            sightingStore,
             credentials::identityId,
             { manager.session?.idToken?.let(::idTokenEmail) },
         )
+
+    /** 目撃と写真を消す (管理者のロールの認証情報のときだけ, 消せる). */
+    val remover = SightingRemover(photoStore, sightingStore)
 
     /** 全員の目撃を読み出す (管理者のロールの認証情報のときだけ, 読める). */
     val sightings = DynamoDbSightingSource(dynamoDb, BuildConfig.TABLE_NAME)
