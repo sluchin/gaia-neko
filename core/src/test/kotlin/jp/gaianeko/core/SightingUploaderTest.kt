@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /** 試験用の保存先 (呼ばれた順を, 記録する). 失敗を, 設定できる. */
-private class Recorder(
+internal class Recorder(
     private val failPhoto: Boolean = false,
     private val failSighting: Boolean = false,
 ) : PhotoStore,
@@ -42,6 +42,16 @@ private class Recorder(
         calls += "sighting"
         if (failSighting) throw IOException("sighting")
         this.sighting = sighting
+    }
+
+    override suspend fun delete(key: String) {
+        calls += "delete photo $key"
+        if (failPhoto) throw IOException("photo")
+    }
+
+    override suspend fun delete(sighting: Sighting) {
+        calls += "delete sighting ${sighting.id}"
+        if (failSighting) throw IOException("sighting")
     }
 }
 

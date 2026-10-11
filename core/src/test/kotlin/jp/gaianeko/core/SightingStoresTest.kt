@@ -8,9 +8,13 @@ package jp.gaianeko.core
 
 import aws.sdk.kotlin.services.dynamodb.DynamoDbClient
 import aws.sdk.kotlin.services.dynamodb.model.AttributeValue
+import aws.sdk.kotlin.services.dynamodb.model.DeleteItemRequest
+import aws.sdk.kotlin.services.dynamodb.model.DeleteItemResponse
 import aws.sdk.kotlin.services.dynamodb.model.PutItemRequest
 import aws.sdk.kotlin.services.dynamodb.model.PutItemResponse
 import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.model.DeleteObjectRequest
+import aws.sdk.kotlin.services.s3.model.DeleteObjectResponse
 import aws.sdk.kotlin.services.s3.model.PutObjectRequest
 import aws.sdk.kotlin.services.s3.model.PutObjectResponse
 import aws.smithy.kotlin.runtime.content.toByteArray
@@ -83,6 +87,40 @@ class SightingStoresTest {
             assertEquals(
                 AttributeValue.S("a@example.com"),
                 request.captured.item?.get("photographer"),
+            )
+        }
+
+    /** 写真を消すときは, バケットとキーを指定する. */
+    @Test
+    fun s3DeletesThePhoto() =
+        runTest {
+            val client = mockk<S3Client>()
+            val request = slot<DeleteObjectRequest>()
+            coEvery { client.deleteObject(capture(request)) } returns DeleteObjectResponse {}
+
+            S3PhotoStore(client, "bucket-1").delete("photos/u/s.jpg")
+
+            assertEquals("bucket-1", request.captured.bucket)
+            assertEquals("photos/u/s.jpg", request.captured.key)
+        }
+
+    /** 目撃を消すときは, パーティションキーとソートキーを指定する. */
+    @Test
+    fun dynamoDbDeletesTheSighting() =
+        runTest {
+            val client = mockk<DynamoDbClient>()
+            val request = slot<DeleteItemRequest>()
+            coEvery { client.deleteItem(capture(request)) } returns DeleteItemResponse {}
+
+            DynamoDbSightingStore(
+                client,
+                "table-1",
+            ).delete(Sighting("s-1", "user-1", GeoPoint(1.0, 2.0), 1, "k"))
+
+            assertEquals("table-1", request.captured.tableName)
+            assertEquals(
+                mapOf("userId" to AttributeValue.S("user-1"), "id" to AttributeValue.S("s-1")),
+                request.captured.key,
             )
         }
 }

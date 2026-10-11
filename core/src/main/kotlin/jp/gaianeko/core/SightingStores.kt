@@ -7,9 +7,11 @@
 package jp.gaianeko.core
 
 import aws.sdk.kotlin.services.dynamodb.DynamoDbClient
+import aws.sdk.kotlin.services.dynamodb.deleteItem
 import aws.sdk.kotlin.services.dynamodb.model.AttributeValue
 import aws.sdk.kotlin.services.dynamodb.putItem
 import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.deleteObject
 import aws.sdk.kotlin.services.s3.putObject
 import aws.smithy.kotlin.runtime.content.ByteStream
 
@@ -52,6 +54,13 @@ interface PhotoStore {
         key: String,
         jpeg: ByteArray,
     )
+
+    /**
+     * 写真を消す (管理者だけが, できる).
+     *
+     * @param key 消す写真のキー
+     */
+    suspend fun delete(key: String)
 }
 
 /** 目撃を保存する入り口 (AWS では DynamoDB. テストでは, 偽物). */
@@ -62,6 +71,13 @@ interface SightingStore {
      * @param sighting 目撃
      */
     suspend fun put(sighting: Sighting)
+
+    /**
+     * 目撃を消す (管理者だけが, できる).
+     *
+     * @param sighting 消す目撃
+     */
+    suspend fun delete(sighting: Sighting)
 }
 
 /**
@@ -83,6 +99,13 @@ class S3PhotoStore(
             this.key = key
             body = ByteStream.fromBytes(jpeg)
             contentType = JPEG_CONTENT_TYPE
+        }
+    }
+
+    override suspend fun delete(key: String) {
+        client.deleteObject {
+            bucket = this@S3PhotoStore.bucket
+            this.key = key
         }
     }
 }
@@ -114,6 +137,17 @@ class DynamoDbSightingStore(
                 ).toMap()
             conditionExpression = NOT_EXISTS
             expressionAttributeNames = mapOf("#id" to ATTR_ID)
+        }
+    }
+
+    override suspend fun delete(sighting: Sighting) {
+        client.deleteItem {
+            tableName = this@DynamoDbSightingStore.tableName
+            key =
+                mapOf(
+                    ATTR_USER_ID to AttributeValue.S(sighting.userId),
+                    ATTR_ID to AttributeValue.S(sighting.id),
+                )
         }
     }
 }
