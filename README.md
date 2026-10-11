@@ -41,6 +41,7 @@ Android アプリ ─ 写真 ─────────────────
 | `latitude` / `longitude` | 位置 (度)。写真の Exif の GPS。なければ、撮影のときの端末の位置 |
 | `takenAt` | 撮影した時刻 (UNIX 時刻 (s)) |
 | `photoKey` | S3 のキー (`photos/<利用者の ID>/<id>.jpg`) |
+| `photographer` | 撮影した利用者のメールアドレス (管理者が、誰の投稿かを知るための表示用。利用者が自分で書くので、信頼できる識別は `userId`。ない投稿もある) |
 
 ## 言語
 
@@ -53,7 +54,7 @@ Android アプリ ─ 写真 ─────────────────
 3. [x] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 ([AWS_SETUP.md](AWS_SETUP.md))
 4. [x] 利用者のログイン (Cognito)。`core`: `UserPoolAuth` (登録、確認、ログイン、更新)、`SessionManager` (ログインの状態。更新トークンで、開き直したときに、ログインを飛ばす)、`CognitoLoginCredentials` (ID プールの認証情報)、`Session.isAdmin` (管理者の判定)。`app`: ログインの画面 (メールアドレス、パスワード、登録、確認コード)。更新トークンは、Android Keystore の鍵で暗号化して保存する。実際の Cognito での動作は、`AWS_SETUP.md` の手順で AWS を作ってから、確認する
 5. [x] 撮影と保存。`core`: `SightingUploader` (写真を S3 に先に保存して、目撃を DynamoDB に保存する)。`app`: カメラのアプリを起動して撮影、写真の Exif の GPS (なければ、端末の最後の位置)、位置の権限
-6. [x] 管理者のマップ。`core`: `DynamoDbSightingSource` (全員の目撃を読む)、`S3PhotoSource` (写真を読む)、`boundsOf` (全てが見える範囲)。`app`: OpenStreetMap の地図 (osmdroid。API キーは要らない) に、ピンで表示して、ピンを押すと写真を取得する。管理者 (グループ `admin`) だけに、ボタンが出る。読み取りの権限は、IAM のロールが決める (利用者は、読めない)。実際の AWS、カメラ、地図の表示は、実機で確認する
+6. [x] 管理者のマップ。`core`: `DynamoDbSightingSource` (全員の目撃を読む)、`S3PhotoSource` (写真を読む)、`boundsOf` (全てが見える範囲)。`app`: OpenStreetMap の地図 (osmdroid。API キーは要らない) に、ピンで表示して、ピンを押すと、写真、撮影日時、位置 (緯度、経度)、撮影者を表示する。管理者 (グループ `admin`) だけに、ボタンが出る。読み取りの権限は、IAM のロールが決める (利用者は、読めない)。実際の AWS、カメラ、地図の表示は、実機で確認する
 
 ## 開発環境
 
