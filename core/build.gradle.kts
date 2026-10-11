@@ -18,6 +18,8 @@ dependencies {
     // AWS のクライアントの型は, app も使う (api). ネットワークは, SDK の既定の HTTP エンジンが行う
     api(libs.aws.cognitoidentity)
     api(libs.aws.cognitoidentityprovider)
+    api(libs.aws.dynamodb)
+    api(libs.aws.s3)
     api(libs.coroutines.core)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.mockk)

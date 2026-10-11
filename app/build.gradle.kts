@@ -87,6 +87,10 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    // FileProvider (カメラに, 撮影した写真の置き場所を渡す)
+    implementation(libs.androidx.core)
+    // 写真の Exif (GPS) を読む
+    implementation(libs.androidx.exifinterface)
     // Dispatchers.Main (画面のスレッド)
     implementation(libs.coroutines.android)
     testImplementation(libs.junit.jupiter)
