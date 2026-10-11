@@ -9,8 +9,9 @@ package jp.gaianeko.core
 /**
  * 猫の目撃 (DynamoDB のテーブル gaia-neko-sightings の 1 件).
  *
- * @property id 目撃の識別子 (UUID. 利用者が撮影のときに決める)
- * @property userId 撮影した利用者の識別子 (Cognito のユーザーの sub)
+ * @property id 目撃の識別子 (UUID. 利用者が撮影のときに決める. ソートキー)
+ * @property userId 撮影した利用者の識別子 (Cognito の ID プールの ID. パーティションキー.
+ * IAM の権限を, 自分の分だけに絞るため, ユーザープールの sub ではなく, この ID を使う)
  * @property point 撮影した位置
  * @property takenAt 撮影した時刻 (UNIX 時刻 (s))
  * @property photoKey 写真の, S3 のキー (写真の本体は, S3 に置く. DynamoDB の 1 件は, 400 KB まで)

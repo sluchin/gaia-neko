@@ -27,7 +27,7 @@ Android アプリ ─ 写真 ─────────────────
 
 | 役割 | S3 | DynamoDB |
 |:---|:---|:---|
-| 利用者 | `PutObject` (自分の `photos/<自分の ID>/` だけ) | `PutItem` (自分の `userId` だけ) |
+| 利用者 | `PutObject` (自分の `photos/<自分の ID>/` だけ) | `PutItem` (パーティションキー `userId` が自分の分だけ) |
 | 管理者 | `GetObject` | `Query` / `Scan` |
 
 利用者のロールに、読み取りの権限を付けません。アクセスキーを、アプリやリポジトリに入れません (Cognito の一時的な認証情報だけを使います)。
@@ -36,8 +36,8 @@ Android アプリ ─ 写真 ─────────────────
 
 | 項目 | 内容 |
 |:---|:---|
-| `id` | 目撃の識別子 (UUID。パーティションキー) |
-| `userId` | 撮影した利用者 (Cognito の `sub`) |
+| `userId` | 撮影した利用者 (Cognito の ID プールの ID。パーティションキー。権限を、自分の分だけに絞るため) |
+| `id` | 目撃の識別子 (UUID。ソートキー) |
 | `latitude` / `longitude` | 位置 (度)。写真の Exif の GPS。なければ、撮影のときの端末の位置 |
 | `takenAt` | 撮影した時刻 (UNIX 時刻 (s)) |
 | `photoKey` | S3 のキー (`photos/<利用者の ID>/<id>.jpg`) |
@@ -46,7 +46,7 @@ Android アプリ ─ 写真 ─────────────────
 
 1. [x] ビルドの土台 (Docker、Gradle、CI、整形、静的解析、テスト、カバレッジ 100%。[thermon](https://github.com/sluchin/thermon) と同じ)
 2. [x] `core`: 位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、目撃 (`Sighting`)
-3. [ ] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 (`AWS_SETUP.md`)
+3. [x] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 ([AWS_SETUP.md](AWS_SETUP.md))
 4. [ ] 利用者のログイン (Cognito)
 5. [ ] 撮影と保存 (カメラ、Exif の GPS、S3 と DynamoDB への書き込み)
 6. [ ] 管理者のマップ (分布の表示、ピンから写真の取得)

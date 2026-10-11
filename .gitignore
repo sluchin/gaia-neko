@@ -42,3 +42,6 @@ local.properties
 # 署名の鍵 (リリース用の鍵を, コミットしない)
 *.jks
 *.keystore
+
+# AWS の手順で作る一時ファイル (アカウント ID が入る)
+/aws-*.json
