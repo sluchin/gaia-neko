@@ -87,6 +87,8 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    // Dispatchers.Main (画面のスレッド)
+    implementation(libs.coroutines.android)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlin.test)
     testRuntimeOnly(libs.junit.launcher)

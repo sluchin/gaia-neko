@@ -15,6 +15,7 @@ jacoco = "0.8.15"
 aws-cognitoidentity = { module = "aws.sdk.kotlin:cognitoidentity", version.ref = "awsSdk" }
 aws-cognitoidentityprovider = { module = "aws.sdk.kotlin:cognitoidentityprovider", version.ref = "awsSdk" }
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
