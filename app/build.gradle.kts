@@ -89,6 +89,8 @@ dependencies {
     implementation(project(":core"))
     // FileProvider (カメラに, 撮影した写真の置き場所を渡す)
     implementation(libs.androidx.core)
+    // 管理者の地図 (OpenStreetMap. API キーは, 要らない)
+    implementation(libs.osmdroid)
     // 写真の Exif (GPS) を読む
     implementation(libs.androidx.exifinterface)
     // Dispatchers.Main (画面のスレッド)
