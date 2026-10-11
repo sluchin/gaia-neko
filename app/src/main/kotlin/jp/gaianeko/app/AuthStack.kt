@@ -9,8 +9,13 @@ package jp.gaianeko.app
 import android.content.Context
 import aws.sdk.kotlin.services.cognitoidentity.CognitoIdentityClient
 import aws.sdk.kotlin.services.cognitoidentityprovider.CognitoIdentityProviderClient
+import aws.sdk.kotlin.services.dynamodb.DynamoDbClient
+import aws.sdk.kotlin.services.s3.S3Client
 import jp.gaianeko.core.CognitoLoginCredentials
+import jp.gaianeko.core.DynamoDbSightingStore
+import jp.gaianeko.core.S3PhotoStore
 import jp.gaianeko.core.SessionManager
+import jp.gaianeko.core.SightingUploader
 import jp.gaianeko.core.UserPoolAuth
 
 /**
@@ -38,5 +43,25 @@ class AuthStack(
             BuildConfig.IDENTITY_POOL_ID,
             "cognito-idp.${BuildConfig.AWS_REGION}.amazonaws.com/${BuildConfig.USER_POOL_ID}",
             manager::idToken,
+        )
+
+    /** 撮影した目撃を, S3 と DynamoDB に保存する (ログインした利用者の認証情報で). */
+    val uploader =
+        SightingUploader(
+            S3PhotoStore(
+                S3Client {
+                    region = BuildConfig.AWS_REGION
+                    credentialsProvider = credentials
+                },
+                BuildConfig.BUCKET_NAME,
+            ),
+            DynamoDbSightingStore(
+                DynamoDbClient {
+                    region = BuildConfig.AWS_REGION
+                    credentialsProvider = credentials
+                },
+                BuildConfig.TABLE_NAME,
+            ),
+            credentials::identityId,
         )
 }

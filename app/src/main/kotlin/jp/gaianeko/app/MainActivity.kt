@@ -7,13 +7,8 @@
 package jp.gaianeko.app
 
 import android.app.Activity
-import android.os.Build
+import android.content.Intent
 import android.os.Bundle
-import android.util.TypedValue
-import android.view.View
-import android.view.WindowInsets
-import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import jp.gaianeko.core.Session
@@ -23,9 +18,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-/** 画面の端と, 内容の間の余白 (dp). */
-private const val CONTENT_PADDING_DP = 16
 
 /**
  * 最初の画面 (ログインの状態で, 画面を切り替える).
@@ -38,6 +30,7 @@ class MainActivity : Activity() {
     private lateinit var root: ScrollView
     private var stack: AuthStack? = null
     private var login: LoginScreen? = null
+    private var capture: CaptureController? = null
 
     /**
      * 画面を作る.
@@ -47,11 +40,11 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         root = ScrollView(this).apply { clipToPadding = false }
-        applySystemBarInsets()
+        root.applySystemBarInsets()
         setContentView(root)
 
-        if (BuildConfig.IDENTITY_POOL_ID.isEmpty() || BuildConfig.CLIENT_ID.isEmpty()) {
-            show(TextView(this).apply { text = getString(R.string.not_configured) })
+        if (BuildConfig.IDENTITY_POOL_ID.isEmpty() || BuildConfig.BUCKET_NAME.isEmpty()) {
+            root.showContent(TextView(this).apply { text = getString(R.string.not_configured) })
             return
         }
         val authStack = AuthStack(this).also { stack = it }
@@ -84,31 +77,39 @@ class MainActivity : Activity() {
             )
         login = screen
         error?.let { screen.showMessage(getString(R.string.error, it)) }
-        show(screen.view)
+        root.showContent(screen.view)
     }
 
     /**
-     * ログインしたあとの画面を表示する (今は, ログインの状態だけ).
+     * ログインしたあとの画面を表示する (撮影と, ログアウト. 管理者のマップは, これから).
      *
      * @param session トークン
      */
     private fun showHome(session: Session) {
+        val authStack = checkNotNull(stack)
         val status = if (session.isAdmin) R.string.signed_in_admin else R.string.signed_in_user
-        show(
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                addView(TextView(context).apply { text = getString(status) })
-                addView(
-                    Button(context).apply {
-                        setText(R.string.sign_out)
-                        setOnClickListener {
-                            stack?.manager?.signOut()
-                            showLogin()
-                        }
-                    },
-                )
-            },
-        )
+        lateinit var screen: HomeScreen
+        val controller =
+            CaptureController(
+                this,
+                scope,
+                authStack.uploader,
+                { busy -> screen.setBusy(busy) },
+                { text -> screen.showMessage(text) },
+            )
+        screen =
+            HomeScreen(
+                this,
+                status,
+                onCapture = controller::start,
+                onSignOut = {
+                    authStack.manager.signOut()
+                    capture = null
+                    showLogin()
+                },
+            )
+        capture = controller
+        root.showContent(screen.view)
     }
 
     /**
@@ -175,42 +176,37 @@ class MainActivity : Activity() {
         }
 
     /**
-     * 画面の中身を差し替える.
+     * 位置の権限の結果を, 撮影の流れに渡す.
      *
-     * @param content 表示する View
+     * @param requestCode 要求の番号
+     * @param permissions 権限
+     * @param grantResults 権限ごとの結果
      */
-    private fun show(content: View) {
-        root.removeAllViews()
-        root.addView(content)
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        capture?.onPermissionResult(requestCode, grantResults)
     }
 
     /**
-     * 内容が, システムバー (ステータスバーなど) と, アクションバーの下に, 隠れないようにする.
+     * カメラの結果を, 撮影の流れに渡す.
      *
-     * Android 15 以降 (targetSdk 35 以上) は, 画面が, システムバーの下まで広がる (edge-to-edge).
-     * システムバーの余白と, アクションバーの高さを, パディングに入れる. それ以前の版は, 広がらないので,
-     * 何もしない.
+     * @param requestCode 要求の番号
+     * @param resultCode 結果
+     * @param data カメラが返したデータ (使わない. 写真は, 渡したファイルに書かれる)
      */
-    private fun applySystemBarInsets() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return
-        }
-        val padding = dp(CONTENT_PADDING_DP)
-        val actionBarSize =
-            TypedValue().let {
-                theme.resolveAttribute(android.R.attr.actionBarSize, it, true)
-                TypedValue.complexToDimensionPixelSize(it.data, resources.displayMetrics)
-            }
-        root.setOnApplyWindowInsetsListener { target, insets ->
-            val bars = insets.getInsets(WindowInsets.Type.systemBars())
-            target.setPadding(
-                bars.left + padding,
-                bars.top + actionBarSize + padding,
-                bars.right + padding,
-                bars.bottom + padding,
-            )
-            insets
-        }
+    @Deprecated("The framework deprecated it, but the Activity API is enough for this screen")
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+    ) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        capture?.onCameraResult(requestCode, resultCode)
     }
 
     /** 画面を閉じるときに, 通信中の処理を止める. */

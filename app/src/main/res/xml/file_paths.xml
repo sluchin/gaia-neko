@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- カメラに渡す, 撮影した写真の置き場所 (アプリのキャッシュ. 撮影のたびに, 消す) -->
+    <cache-path name="images" path="images/" />
+</paths>

@@ -13,5 +13,9 @@
     <string name="confirmed">Confirmed. Sign in now.</string>
     <string name="signed_in_user">Signed in.</string>
     <string name="signed_in_admin">Signed in as an administrator.</string>
+    <string name="take_photo">Take a photo of a cat</string>
+    <string name="location_denied">The location permission is required to record where the cat was.</string>
+    <string name="no_location">The location is not available. Turn on the location and try again.</string>
+    <string name="saved">Saved.</string>
     <string name="error">Error: %1$s</string>
 </resources>
