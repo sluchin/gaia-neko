@@ -35,6 +35,9 @@ import java.time.ZoneId
 /** 最初に表示する, 地図の拡大率 (目撃がないとき). */
 private const val DEFAULT_ZOOM = 5.0
 
+/** 目撃が 1 つのとき (範囲の幅が 0 のとき) などの, 最大の拡大率 (最大にすると, タイルが無い拡大率になる). */
+private const val MAX_ZOOM = 16.0
+
 /** 全ての目撃が入る範囲に合わせるときの, 余白 (px). */
 private const val BOUNDS_PADDING_PX = 100
 
@@ -149,7 +152,7 @@ class AdminMapScreen(
         }
         boundsOf(all.map { it.point })?.let { b ->
             val box = BoundingBox(b.maxLatitude, b.maxLongitude, b.minLatitude, b.minLongitude)
-            map.post { map.zoomToBoundingBox(box, false, BOUNDS_PADDING_PX) }
+            map.post { map.zoomToBoundingBox(box, false, BOUNDS_PADDING_PX, MAX_ZOOM, null) }
         }
         map.invalidate()
     }
