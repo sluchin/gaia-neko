@@ -17,12 +17,14 @@ import android.widget.TextView
  * @param context コンテキスト
  * @param statusId 最初に表示する状態の文字列のリソース
  * @param onCapture 撮影を押したとき
+ * @param onMap 地図を押したとき (管理者だけ. 管理者でなければ, null で, ボタンを出さない)
  * @param onSignOut ログアウトを押したとき
  */
 class HomeScreen(
     context: Context,
     statusId: Int,
     onCapture: () -> Unit,
+    onMap: (() -> Unit)?,
     onSignOut: () -> Unit,
 ) {
     private val status = TextView(context).apply { setText(statusId) }
@@ -39,6 +41,14 @@ class HomeScreen(
             orientation = LinearLayout.VERTICAL
             addView(status)
             addView(capture)
+            onMap?.let {
+                addView(
+                    Button(context).apply {
+                        setText(R.string.open_map)
+                        setOnClickListener { it() }
+                    },
+                )
+            }
             addView(message)
             addView(
                 Button(context).apply {

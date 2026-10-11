@@ -23,14 +23,15 @@ import kotlinx.coroutines.withContext
  * 最初の画面 (ログインの状態で, 画面を切り替える).
  *
  * AWS の設定がなければ, その旨を表示する. 保存した更新トークンがあれば, ログインの画面を飛ばす.
- * ログインしたあとの画面 (撮影, 管理者のマップ) は, これから作る.
+ * ログインしたあとは, 撮影の画面になる. 管理者には, 地図の画面へのボタンも出る.
  */
 class MainActivity : Activity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var root: ScrollView
     private var stack: AuthStack? = null
-    private var login: LoginScreen? = null
+    private var login: LoginController? = null
     private var capture: CaptureController? = null
+    private var map: AdminMapScreen? = null
 
     /**
      * 画面を作る.
@@ -48,14 +49,15 @@ class MainActivity : Activity() {
             return
         }
         val authStack = AuthStack(this).also { stack = it }
+        val controller =
+            LoginController(this, scope, authStack, root::showContent) { showHome(it) }
+                .also { login = it }
         scope.launch {
             val restored =
                 runCatching { withContext(Dispatchers.IO) { authStack.manager.restore() } }
             val session = restored.getOrNull()
-            if (session ==
-                null
-            ) {
-                showLogin(restored.exceptionOrNull()?.message)
+            if (session == null) {
+                controller.showLogin(restored.exceptionOrNull()?.message)
             } else {
                 showHome(session)
             }
@@ -63,25 +65,7 @@ class MainActivity : Activity() {
     }
 
     /**
-     * ログインの画面を表示する.
-     *
-     * @param error 前の処理の失敗のメッセージ (なければ, null)
-     */
-    private fun showLogin(error: String? = null) {
-        val screen =
-            LoginScreen(
-                this,
-                onSignIn = { email, password -> run(signIn(email, password)) },
-                onSignUp = { email, password -> run(signUp(email, password)) },
-                onConfirm = { email, code -> run(confirm(email, code)) },
-            )
-        login = screen
-        error?.let { screen.showMessage(getString(R.string.error, it)) }
-        root.showContent(screen.view)
-    }
-
-    /**
-     * ログインしたあとの画面を表示する (撮影と, ログアウト. 管理者のマップは, これから).
+     * ログインしたあとの画面を表示する (撮影と, ログアウト. 管理者には, 地図のボタンも).
      *
      * @param session トークン
      */
@@ -102,10 +86,11 @@ class MainActivity : Activity() {
                 this,
                 status,
                 onCapture = controller::start,
+                onMap = if (session.isAdmin) ({ showMap(session) }) else null,
                 onSignOut = {
                     authStack.manager.signOut()
                     capture = null
-                    showLogin()
+                    login?.showLogin()
                 },
             )
         capture = controller
@@ -113,67 +98,22 @@ class MainActivity : Activity() {
     }
 
     /**
-     * 通信の処理を実行する (実行している間は, ボタンを押せなくして, 失敗したら, メッセージを表示する).
+     * 管理者の地図の画面を表示する (閉じると, ログインしたあとの画面に戻る).
      *
-     * @param action 通信の処理 (IO のスレッドで実行する)
+     * @param session トークン
      */
-    private fun run(action: suspend () -> Unit) {
-        val screen = login ?: return
-        screen.setBusy(true)
-        scope.launch {
-            runCatching { withContext(Dispatchers.IO) { action() } }
-                .onFailure { screen.showMessage(getString(R.string.error, it.message)) }
-            screen.setBusy(false)
-        }
+    private fun showMap(session: Session) {
+        val authStack = checkNotNull(stack)
+        val screen =
+            AdminMapScreen(this, scope, authStack.sightings, authStack.photos) {
+                map?.onDestroy()
+                map = null
+                showHome(session)
+            }
+        map = screen
+        root.showContent(screen.view)
+        screen.load()
     }
-
-    /**
-     * ログインする (成功したら, ログインしたあとの画面にする).
-     *
-     * @param email メールアドレス
-     * @param password パスワード
-     * @return 通信の処理
-     */
-    private fun signIn(
-        email: String,
-        password: String,
-    ): suspend () -> Unit =
-        {
-            val session = checkNotNull(stack).manager.signIn(email, password)
-            withContext(Dispatchers.Main) { showHome(session) }
-        }
-
-    /**
-     * 登録する (成功したら, 確認コードの入力欄を出す).
-     *
-     * @param email メールアドレス
-     * @param password パスワード
-     * @return 通信の処理
-     */
-    private fun signUp(
-        email: String,
-        password: String,
-    ): suspend () -> Unit =
-        {
-            checkNotNull(stack).auth.signUp(email, password)
-            withContext(Dispatchers.Main) { login?.showConfirm() }
-        }
-
-    /**
-     * 確認コードで登録を完了する (成功したら, そのメッセージを表示する. ログインは, 続けて押す).
-     *
-     * @param email メールアドレス
-     * @param code 確認コード
-     * @return 通信の処理
-     */
-    private fun confirm(
-        email: String,
-        code: String,
-    ): suspend () -> Unit =
-        {
-            checkNotNull(stack).auth.confirmSignUp(email, code)
-            withContext(Dispatchers.Main) { login?.showMessage(getString(R.string.confirmed)) }
-        }
 
     /**
      * 位置の権限の結果を, 撮影の流れに渡す.
@@ -209,8 +149,21 @@ class MainActivity : Activity() {
         capture?.onCameraResult(requestCode, resultCode)
     }
 
+    /** 画面が前面に出たとき (地図を再開する). */
+    override fun onResume() {
+        super.onResume()
+        map?.onResume()
+    }
+
+    /** 画面が背面に回ったとき (地図を止める). */
+    override fun onPause() {
+        map?.onPause()
+        super.onPause()
+    }
+
     /** 画面を閉じるときに, 通信中の処理を止める. */
     override fun onDestroy() {
+        map?.onDestroy()
         scope.cancel()
         super.onDestroy()
     }

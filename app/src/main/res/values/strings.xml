@@ -17,5 +17,9 @@
     <string name="location_denied">The location permission is required to record where the cat was.</string>
     <string name="no_location">The location is not available. Turn on the location and try again.</string>
     <string name="saved">Saved.</string>
+    <string name="open_map">Open the map of the cats</string>
+    <string name="close">Close</string>
+    <string name="loading">Loading…</string>
+    <string name="sighting_count">Sightings: %1$d</string>
     <string name="error">Error: %1$s</string>
 </resources>
