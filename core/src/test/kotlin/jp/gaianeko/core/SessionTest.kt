@@ -10,6 +10,7 @@ import java.util.Base64
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -70,5 +71,16 @@ class SessionTest {
             listOf(session.component1(), session.component2(), session.component3()),
         )
         assertEquals(5L, session.component4())
+    }
+
+    /** ID トークンから, メールアドレスを取り出す. ないときや, 読めないときは, null. */
+    @Test
+    fun emailIsReadFromTheIdToken() {
+        assertEquals(
+            "a@example.com",
+            idTokenEmail(fakeIdToken("""{"sub":"u","email":"a@example.com"}""")),
+        )
+        assertNull(idTokenEmail(fakeIdToken("""{"sub":"u"}""")))
+        assertNull(idTokenEmail("abc"))
     }
 }

@@ -9,6 +9,7 @@ package jp.gaianeko.core
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** 撮影した時刻の表示の形式 (例: 2026-10-11 15:30:00). */
 private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -45,6 +46,15 @@ fun boundsOf(points: List<GeoPoint>): GeoBounds? =
             points.map { it.longitude }.max(),
         )
     }
+
+/**
+ * 位置を, 表示用の文字列にする (小数点以下 6 桁. 例: 35.123456, 139.123456).
+ *
+ * @param point 位置
+ * @return 「緯度, 経度」の文字列
+ */
+fun formatPoint(point: GeoPoint): String =
+    "%.6f, %.6f".format(Locale.ROOT, point.latitude, point.longitude)
 
 /**
  * 撮影した時刻を, 表示用の文字列にする (例: 2026-10-11 15:30:00).

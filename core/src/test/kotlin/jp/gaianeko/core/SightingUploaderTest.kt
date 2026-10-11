@@ -50,9 +50,7 @@ class SightingUploaderTest {
     private val point = GeoPoint(35.0, 139.0)
 
     private fun uploader(recorder: Recorder) =
-        SightingUploader(recorder, recorder, {
-            "user-1"
-        }, { "s-1" })
+        SightingUploader(recorder, recorder, { "user-1" }, newId = { "s-1" })
 
     /** 写真を先に保存して, 次に, 目撃を保存する. 目撃には, 利用者, 位置, 時刻, 写真のキーが入る. */
     @Test
@@ -99,5 +97,16 @@ class SightingUploaderTest {
             val b = real.upload(byteArrayOf(1), point, 1)
 
             assertTrue(a.id != b.id)
+        }
+
+    /** 撮影者を返す関数を渡せば, 目撃に入る. */
+    @Test
+    fun uploadKeepsThePhotographer() =
+        runTest {
+            val recorder = Recorder()
+            val uploader =
+                SightingUploader(recorder, recorder, { "user-1" }, { "a@example.com" }, { "s-1" })
+
+            assertEquals("a@example.com", uploader.upload(byteArrayOf(1), point, 1).photographer)
         }
 }

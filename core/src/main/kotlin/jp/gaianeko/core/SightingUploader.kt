@@ -17,12 +17,14 @@ import java.util.UUID
  * @property photos 写真の保存先
  * @property sightings 目撃の保存先
  * @property userId 利用者の識別子を返す関数 (ID プールの ID)
+ * @property photographer 撮影した利用者のメールアドレスを返す関数 (表示用. ないときは, null)
  * @property newId 目撃の識別子を作る関数 (テストで, 差し替える)
  */
 class SightingUploader(
     private val photos: PhotoStore,
     private val sightings: SightingStore,
     private val userId: suspend () -> String,
+    private val photographer: suspend () -> String? = { null },
     private val newId: () -> String = { UUID.randomUUID().toString() },
 ) {
     /**
@@ -40,7 +42,7 @@ class SightingUploader(
     ): Sighting {
         val user = userId()
         val id = newId()
-        val sighting = Sighting(id, user, point, takenAt, photoKey(user, id))
+        val sighting = Sighting(id, user, point, takenAt, photoKey(user, id), photographer())
         photos.put(sighting.photoKey, jpeg)
         sightings.put(sighting)
         return sighting

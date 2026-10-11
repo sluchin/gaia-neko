@@ -67,4 +67,22 @@ class SightingStoresTest {
             assertEquals("attribute_not_exists(#id)", request.captured.conditionExpression)
             assertEquals(mapOf("#id" to "id"), request.captured.expressionAttributeNames)
         }
+
+    /** 撮影者がいれば, 項目に加えて書く. */
+    @Test
+    fun dynamoDbPutsThePhotographer() =
+        runTest {
+            val client = mockk<DynamoDbClient>()
+            val request = slot<PutItemRequest>()
+            coEvery { client.putItem(capture(request)) } returns PutItemResponse {}
+            val sighting =
+                Sighting("s-1", "user-1", GeoPoint(1.5, -2.5), 1000, "k", "a@example.com")
+
+            DynamoDbSightingStore(client, "table-1").put(sighting)
+
+            assertEquals(
+                AttributeValue.S("a@example.com"),
+                request.captured.item?.get("photographer"),
+            )
+        }
 }

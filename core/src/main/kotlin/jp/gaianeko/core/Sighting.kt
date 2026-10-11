@@ -15,6 +15,8 @@ package jp.gaianeko.core
  * @property point 撮影した位置
  * @property takenAt 撮影した時刻 (UNIX 時刻 (s))
  * @property photoKey 写真の, S3 のキー (写真の本体は, S3 に置く. DynamoDB の 1 件は, 400 KB まで)
+ * @property photographer 撮影した利用者のメールアドレス (管理者が, 誰の投稿かを知るための表示用. 利用者が
+ * 自分で書くので, 信頼できる識別は, userId. ないこともある)
  */
 data class Sighting(
     val id: String,
@@ -22,6 +24,7 @@ data class Sighting(
     val point: GeoPoint,
     val takenAt: Long,
     val photoKey: String,
+    val photographer: String? = null,
 )
 
 /**

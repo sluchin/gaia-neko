@@ -34,6 +34,9 @@ private const val ATTR_TAKEN_AT = "takenAt"
 /** 属性名: 写真の, S3 のキー. */
 private const val ATTR_PHOTO_KEY = "photoKey"
 
+/** 属性名: 撮影した利用者のメールアドレス (表示用). */
+private const val ATTR_PHOTOGRAPHER = "photographer"
+
 /** 同じ目撃を, 上書きしないための条件 (その項目が, まだ, ないときだけ書く). */
 private const val NOT_EXISTS = "attribute_not_exists(#id)"
 
@@ -105,7 +108,10 @@ class DynamoDbSightingStore(
                     ATTR_LONGITUDE to AttributeValue.N(sighting.point.longitude.toString()),
                     ATTR_TAKEN_AT to AttributeValue.N(sighting.takenAt.toString()),
                     ATTR_PHOTO_KEY to AttributeValue.S(sighting.photoKey),
-                )
+                ) +
+                listOfNotNull(
+                    sighting.photographer?.let { ATTR_PHOTOGRAPHER to AttributeValue.S(it) },
+                ).toMap()
             conditionExpression = NOT_EXISTS
             expressionAttributeNames = mapOf("#id" to ATTR_ID)
         }

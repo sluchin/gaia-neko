@@ -94,7 +94,14 @@ internal fun toSighting(item: Map<String, AttributeValue>): Sighting? {
             null
         }
     return if (texts.size == TEXT_ATTRIBUTES && takenAt != null && point != null) {
-        Sighting(texts[1], texts[0], point, takenAt, texts[2])
+        Sighting(
+            texts[1],
+            texts[0],
+            point,
+            takenAt,
+            texts[2],
+            (item["photographer"] as? AttributeValue.S)?.value,
+        )
     } else {
         null
     }

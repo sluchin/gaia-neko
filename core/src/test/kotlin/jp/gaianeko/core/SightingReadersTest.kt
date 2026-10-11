@@ -154,4 +154,13 @@ class SightingReadersTest {
 
             assertEquals("S3 did not return the photo", error.message)
         }
+
+    /** 撮影者の項目があれば, 読む. */
+    @Test
+    fun toSightingReadsThePhotographer() {
+        val sighting = toSighting(item() + ("photographer" to AttributeValue.S("a@example.com")))
+
+        assertEquals("a@example.com", sighting?.photographer)
+        assertNull(toSighting(item())?.photographer)
+    }
 }

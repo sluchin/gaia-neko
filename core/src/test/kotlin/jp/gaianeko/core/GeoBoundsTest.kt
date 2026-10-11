@@ -62,4 +62,10 @@ class GeoBoundsTest {
             ),
         )
     }
+
+    /** 位置は, 小数点以下 6 桁で, 緯度, 経度の順に表示する. */
+    @Test
+    fun pointIsFormatted() {
+        assertEquals("35.123457, -139.500000", formatPoint(GeoPoint(35.1234567, -139.5)))
+    }
 }

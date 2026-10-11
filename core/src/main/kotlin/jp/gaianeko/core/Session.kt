@@ -14,6 +14,9 @@ const val ADMIN_GROUP = "admin"
 /** ID トークンの, グループの項目 (cognito:groups) を探す式. */
 private val GROUPS_PATTERN = Regex("\"cognito:groups\"\\s*:\\s*\\[([^\\]]*)]")
 
+/** ID トークンの, メールアドレスの項目 (email) を探す式. */
+private val EMAIL_PATTERN = Regex("\"email\"\\s*:\\s*\"([^\"]*)\"")
+
 /** グループの一覧の中の, 引用符で囲んだ名前を探す式. */
 private val QUOTED_NAME_PATTERN = Regex("\"([^\"]*)\"")
 
@@ -47,15 +50,32 @@ data class Session(
  * @return グループの名前 (ないときは, 空)
  */
 fun idTokenGroups(idToken: String): List<String> {
-    val payload = idToken.split(".").getOrNull(1).orEmpty()
-    val json =
-        runCatching { String(Base64.getUrlDecoder().decode(payload), Charsets.UTF_8) }
-            .getOrDefault("")
     val names =
         GROUPS_PATTERN
-            .find(json)
+            .find(idTokenPayload(idToken))
             ?.groupValues
             ?.get(1)
             .orEmpty()
     return QUOTED_NAME_PATTERN.findAll(names).map { it.groupValues[1] }.toList()
+}
+
+/**
+ * ID トークンから, ログインしたユーザーのメールアドレスを取り出す (署名は, 検証しない. 表示だけに使う).
+ *
+ * @param idToken ID トークン (JWT)
+ * @return メールアドレス. ないとき (形が違う, 読めない, 項目がない) は, null
+ */
+fun idTokenEmail(idToken: String): String? =
+    EMAIL_PATTERN.find(idTokenPayload(idToken))?.groupValues?.get(1)
+
+/**
+ * ID トークンの本体 (JSON の文字列) を取り出す.
+ *
+ * @param idToken ID トークン (JWT. ヘッダー.本体.署名)
+ * @return 本体の JSON. 形が違う, または, 読めないときは, 空の文字列
+ */
+private fun idTokenPayload(idToken: String): String {
+    val payload = idToken.split(".").getOrNull(1).orEmpty()
+    return runCatching { String(Base64.getUrlDecoder().decode(payload), Charsets.UTF_8) }
+        .getOrDefault("")
 }
