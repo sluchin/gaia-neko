@@ -51,7 +51,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 ## プロジェクト構成
 
-- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifCoordinate`)。AWS のクライアントは、引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
+- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、トークン (`Session`。管理者かの判定 `isAdmin` は、画面の出し分けだけに使う)。AWS のクライアントは、引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
 - `app/`: Android。画面 (撮影、ログイン、管理者のマップ) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは、`core` に置く (UI は、単体テストの対象外)。
 - `gradle/libs.versions.toml`: ライブラリとプラグインの版 (版カタログ)。版を変えるときは、ここだけ。
 - `config/detekt/detekt.yml`: detekt の規則 (既定に、上書きするものだけ)。

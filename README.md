@@ -47,7 +47,7 @@ Android アプリ ─ 写真 ─────────────────
 1. [x] ビルドの土台 (Docker、Gradle、CI、整形、静的解析、テスト、カバレッジ 100%。[thermon](https://github.com/sluchin/thermon) と同じ)
 2. [x] `core`: 位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、目撃 (`Sighting`)
 3. [x] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 ([AWS_SETUP.md](AWS_SETUP.md))
-4. [ ] 利用者のログイン (Cognito)
+4. [ ] 利用者のログイン (Cognito)。`core` は済み (`UserPoolAuth`: 登録、確認、ログイン、更新。`CognitoLoginCredentials`: ID プールの認証情報。`Session.isAdmin`: 管理者の判定)。画面は、これから
 5. [ ] 撮影と保存 (カメラ、Exif の GPS、S3 と DynamoDB への書き込み)
 6. [ ] 管理者のマップ (分布の表示、ピンから写真の取得)
 
