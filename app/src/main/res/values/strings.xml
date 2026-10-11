@@ -2,4 +2,16 @@
 <resources>
     <string name="app_name" translatable="false">gaia-neko</string>
     <string name="not_configured">AWS is not configured. Set the gaianeko.* values in local.properties.</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="code">Confirmation code</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_up">Sign up</string>
+    <string name="confirm">Confirm</string>
+    <string name="sign_out">Sign out</string>
+    <string name="code_sent">A confirmation code was sent to your email.</string>
+    <string name="confirmed">Confirmed. Sign in now.</string>
+    <string name="signed_in_user">Signed in.</string>
+    <string name="signed_in_admin">Signed in as an administrator.</string>
+    <string name="error">Error: %1$s</string>
 </resources>
