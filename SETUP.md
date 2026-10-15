@@ -1,17 +1,17 @@
 # 環境構築
 
-gaia-neko の、ビルドとテストの手順です。作りは、[thermon](https://github.com/sluchin/thermon) の `SETUP.md` と同じです (Docker のイメージ、Gradle、CI)。
+gaia-neko の、ビルドとテストの手順です。作りは [thermon](https://github.com/sluchin/thermon) の `SETUP.md` と同じです (Docker のイメージ、Gradle、CI)。
 
 ## 1. 必要なもの
 
 - Docker (Docker Compose を含む)
 - Git
 
-Android Studio、JDK、Android SDK は、ホストに入れません (Docker のイメージの中にあります)。
+Android Studio、JDK、Android SDK はホストに入れません (Docker のイメージの中にあります)。
 
 ## 2. ホストのユーザー ID を環境変数にエクスポートする
 
-生成物 (`build/` など) が、root の所有にならないように、コンテナを、ホストのユーザーで実行します。
+生成物 (`build/` など) が root の所有にならないように、コンテナをホストのユーザーで実行します。
 
 ```bash
 export UID GID=$(id -g)
@@ -32,11 +32,11 @@ docker compose run --rm clean         # 生成物を消す
 docker compose run --rm dev           # 開発シェル
 ```
 
-`docker compose run` には、必ず `--rm` を付けます。
+`docker compose run` には必ず `--rm` を付けます。
 
 ## 4. AWS の設定 (これから)
 
-接続先は、`local.properties` (コミットしない) か、Gradle のプロパティで渡します。
+接続先は `local.properties` (コミットしない) か、Gradle のプロパティで渡します。
 
 ```properties
 # local.properties (リポジトリの直下。.gitignore で無視する)
@@ -48,12 +48,12 @@ gaianeko.table=gaia-neko-sightings
 gaianeko.bucket=<バケット名>
 ```
 
-実際の ID を、リポジトリに書きません。AWS の準備の手順は、これから `AWS_SETUP.md` に書きます。
+実際の ID をリポジトリに書きません。AWS の準備の手順はこれから `AWS_SETUP.md` に書きます。
 
 ## 5. クラウドのセッション (claude.ai/code)
 
-通常の `docker compose` は、プロキシの設定がないため、失敗します。`scripts/cloud-docker.sh build` と `scripts/cloud-docker.sh run <サービス>` を使います (詳しくは、`.claude/CLAUDE.md`)。
+通常の `docker compose` はプロキシの設定がないため、失敗します。`scripts/cloud-docker.sh build` と `scripts/cloud-docker.sh run <サービス>` を使います (詳しくは `.claude/CLAUDE.md`)。
 
 ## 6. CI (GitHub Actions)
 
-push のたびに、`.github/workflows/build.yml` が、`build` / `test` / `coverage` / `format` / `analyze` / `docs` を、実行します。`build` が成功すると、デバッグ用の APK を、アーティファクト `gaia_neko_apk` に保存します (3 日で期限が切れます。Actions の実行の画面から、ダウンロードできます)。
+push のたびに、`.github/workflows/build.yml` が `build` / `test` / `coverage` / `format` / `analyze` / `docs` を実行します。`build` が成功すると、デバッグ用の APK をアーティファクト `gaia_neko_apk` に保存します (3 日で期限が切れます。Actions の実行の画面から、ダウンロードできます)。
