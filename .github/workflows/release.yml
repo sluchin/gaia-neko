@@ -1,0 +1,49 @@
+name: Release
+
+# v から始まるタグ (例: v0.1.0) を push すると、APK (デバッグ鍵で署名したデバッグ版) を載せた、GitHub Releases のドラフトを作る
+# (中身を確かめて、手で公開する。ソースの zip と tar.gz は、GitHub が自動で付ける).
+# 手動実行 (workflow_dispatch) は、タグを打たずに、成果物を Actions の Artifacts に保存する.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  apk:
+    name: apk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # GitHub Releases への書き込み
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build the development image
+        uses: ./.github/actions/docker-image
+
+      - name: Cache the Gradle home
+        uses: ./.github/actions/gradle-cache
+
+      - name: Build the APK
+        run: env UID="$(id -u)" GID="$(id -g)" docker compose run --rm build
+
+      - name: Name the APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "gaia-neko_${{ github.ref_name }}.apk"
+
+      - name: Create the draft release with the APK
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" "gaia-neko_${{ github.ref_name }}.apk" \
+            --draft --title "gaia-neko ${{ github.ref_name }}" --generate-notes
+
+      - name: Upload the APK as an artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: gaia-neko-apk
+          path: gaia-neko_*.apk
+          if-no-files-found: error

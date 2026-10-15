@@ -67,6 +67,10 @@ config/  detekt (静的解析) の設定
 gradle/  版カタログ (libs.versions.toml) と, Gradle ラッパー
 ```
 
+## リリース
+
+`v0.1.0` のようなタグを push すると、GitHub Actions の `release.yml` が、GitHub Releases の**ドラフト**を作ります (載せるもの: APK (デバッグ鍵で署名したデバッグ版))。中身を確かめて、手で公開します。タグを打たずに試すときは、Actions の Release を手動で実行します (成果物は、Artifacts に保存されます)。
+
 ## ライセンス
 
 GPL-3.0-or-later ([LICENSE](LICENSE))。
