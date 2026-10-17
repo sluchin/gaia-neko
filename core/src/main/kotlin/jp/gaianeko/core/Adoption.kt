@@ -9,8 +9,11 @@ package jp.gaianeko.core
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
-/** 里親募集の一覧のページ (ニャン友ねっとわーく北海道. 一覧の固定ページに転送される). */
+/** 里親募集の一覧の, 最初のページ (ニャン友ねっとわーく北海道. 一覧の固定ページに転送される). */
 const val ADOPTION_URL = "https://nyantomo.jp/satooya/"
+
+/** 2 ページ目からの, ページの番号を付ける問い合わせ (JetSmartFilters のページ送り. 後ろに番号を付ける). */
+private const val PAGE_QUERY = "?jsf=jet-engine&pagenum="
 
 /** 一覧の項目の, 名前の見出し. */
 private const val LABEL_NAME = "名前"
@@ -43,6 +46,17 @@ data class AdoptionCat(
 )
 
 /**
+ * 里親募集の一覧の, 1 ページ (サイトは, 1 ページに 15 匹ずつ並べる).
+ *
+ * @property cats 猫 (ページの順)
+ * @property nextUrl 次のページの URL (最後のページなら, null)
+ */
+data class AdoptionPage(
+    val cats: List<AdoptionCat>,
+    val nextUrl: String?,
+)
+
+/**
  * 一覧のページを, 読めなかったとき (サイトの作りが, 変わったとき).
  *
  * @param message 理由
@@ -52,25 +66,45 @@ class AdoptionParseException(
 ) : IllegalStateException(message)
 
 /**
- * 里親募集の一覧のページ (HTML) から, 猫を読み出す.
+ * 里親募集の一覧のページ (HTML) から, 猫と, 次のページの URL を読み出す.
  *
  * ページは, WordPress (Elementor と JetEngine) の一覧. 1 匹ごとの項目に, 写真, 詳細のページへのリンク,
  * 「名前」「年齢」「性別」の見出しと, その次の値, 状態がある. 名前か, リンクのない項目は, 飛ばす.
+ * 一覧の部品の `data-page` と `data-pages` が, 今のページと, ページの数. 次のページは, 一覧の固定ページ
+ * (`canonical` のリンク. なければ, [baseUrl]) に, ページの番号の問い合わせを付けた URL.
  *
  * @param html 一覧のページの HTML
  * @param baseUrl 相対の URL を解決する, ページの URL
- * @return 猫 (ページの順)
+ * @return 猫と, 次のページの URL
  * @throws AdoptionParseException 一覧が見つからないとき (サイトの作りが, 変わったとき)
  */
-fun parseAdoptionList(
+fun parseAdoptionPage(
     html: String,
     baseUrl: String = ADOPTION_URL,
-): List<AdoptionCat> {
+): AdoptionPage {
     val document = Jsoup.parse(html, baseUrl)
-    if (document.selectFirst(".jet-listing-grid__items") == null) {
-        throw AdoptionParseException("The list of the cats is not found")
-    }
-    return document.select(".jet-listing-grid__item").mapNotNull { parseItem(it) }
+    val list =
+        document.selectFirst(".jet-listing-grid__items")
+            ?: throw AdoptionParseException("The list of the cats is not found")
+    val page = list.attr("data-page").toIntOrNull() ?: 1
+    val pages = list.attr("data-pages").toIntOrNull() ?: 1
+    val listUrl =
+        document
+            .selectFirst("link[rel=canonical]")
+            ?.absUrl("href")
+            .orEmpty()
+            .ifEmpty { baseUrl }
+    return AdoptionPage(
+        cats = document.select(".jet-listing-grid__item").mapNotNull { parseItem(it) },
+        nextUrl =
+            if (page <
+                pages
+            ) {
+                "${listUrl.substringBefore('?')}$PAGE_QUERY${page + 1}"
+            } else {
+                null
+            },
+    )
 }
 
 /**

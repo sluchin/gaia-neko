@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-/** [parseAdoptionList] の単体テスト (サイトと同じ作りの, ダミーの HTML で確認する). */
+/** [parseAdoptionPage] の単体テスト (サイトと同じ作りの, ダミーの HTML で確認する). */
 class AdoptionTest {
     /** 見出しと値の組 (サイトの Elementor の部品と, 同じ入れ子). */
     private fun labeled(
@@ -38,15 +38,26 @@ class AdoptionTest {
     }
 
     /** 一覧のページ. */
-    private fun page(vararg items: String): String {
+    private fun page(vararg items: String): String = pageOf("", "", *items)
+
+    /** ページの番号と, 頭の部分を付けた, 一覧のページ. */
+    private fun pageOf(
+        head: String,
+        pages: String,
+        vararg items: String,
+    ): String {
         val list = items.joinToString("")
-        return """<html><body><div class="jet-listing-grid__items">$list</div></body></html>"""
+        val body = """<div class="jet-listing-grid__items"$pages>$list</div>"""
+        return "<html><head>$head</head><body>$body</body></html>"
     }
+
+    /** 一覧のページの, 猫だけを読み出す. */
+    private fun catsOf(html: String): List<AdoptionCat> = parseAdoptionPage(html).cats
 
     /** 名前, 年齢, 性別, 状態, 詳細のページ, 写真を読み出す. */
     @Test
-    fun parseAdoptionListReadsAllFields() {
-        val cats = parseAdoptionList(page(item()))
+    fun parseAdoptionPageReadsAllFields() {
+        val cats = catsOf(page(item()))
 
         assertEquals(
             listOf(
@@ -65,9 +76,9 @@ class AdoptionTest {
 
     /** 項目は, ページの順に並べる. */
     @Test
-    fun parseAdoptionListKeepsTheOrder() {
+    fun parseAdoptionPageKeepsTheOrder() {
         val cats =
-            parseAdoptionList(
+            catsOf(
                 page(
                     item(href = "https://example.com/satooya/a/"),
                     item(href = "https://example.com/satooya/b/"),
@@ -82,28 +93,28 @@ class AdoptionTest {
 
     /** 相対のリンクは, ページの URL で解決して, `#` から後ろを除く. */
     @Test
-    fun parseAdoptionListResolvesTheLink() {
-        val cats = parseAdoptionList(page(item(href = "/satooya/tama/#respond")))
+    fun parseAdoptionPageResolvesTheLink() {
+        val cats = catsOf(page(item(href = "/satooya/tama/#respond")))
 
         assertEquals("https://nyantomo.jp/satooya/tama/", cats.single().url)
     }
 
     /** 詳細のページへのリンクがない項目は, 飛ばす. */
     @Test
-    fun parseAdoptionListSkipsItemWithoutLink() {
-        assertEquals(emptyList(), parseAdoptionList(page(item(href = null))))
+    fun parseAdoptionPageSkipsItemWithoutLink() {
+        assertEquals(emptyList(), catsOf(page(item(href = null))))
     }
 
     /** 名前がない項目は, 飛ばす. */
     @Test
-    fun parseAdoptionListSkipsItemWithoutName() {
-        assertEquals(emptyList(), parseAdoptionList(page(item(fields = labeled("年齢", "約1歳")))))
+    fun parseAdoptionPageSkipsItemWithoutName() {
+        assertEquals(emptyList(), catsOf(page(item(fields = labeled("年齢", "約1歳")))))
     }
 
     /** 年齢と性別がなければ, null. */
     @Test
-    fun parseAdoptionListWithoutAgeAndSex() {
-        val cat = parseAdoptionList(page(item(fields = labeled("名前", "タマ")))).single()
+    fun parseAdoptionPageWithoutAgeAndSex() {
+        val cat = catsOf(page(item(fields = labeled("名前", "タマ")))).single()
 
         assertNull(cat.age)
         assertNull(cat.sex)
@@ -111,11 +122,11 @@ class AdoptionTest {
 
     /** 値が空, 値の部品がない, 見出しが部品に入っていないときは, null. */
     @Test
-    fun parseAdoptionListWithMissingValues() {
+    fun parseAdoptionPageWithMissingValues() {
         val fields =
             labeled("名前", "タマ") + labeled("年齢", " ") +
                 """<p class="elementor-heading-title">性別</p>"""
-        val cat = parseAdoptionList(page(item(fields = fields))).single()
+        val cat = catsOf(page(item(fields = fields))).single()
 
         assertNull(cat.age)
         assertNull(cat.sex)
@@ -123,20 +134,20 @@ class AdoptionTest {
 
     /** 見出しの部品の, 次の部品がなければ, null. */
     @Test
-    fun parseAdoptionListWithoutValueElement() {
+    fun parseAdoptionPageWithoutValueElement() {
         val fields =
             labeled("名前", "タマ") +
                 """<div><div class="elementor-element"><p class="elementor-heading-title">年齢</p></div></div>"""
-        val cat = parseAdoptionList(page(item(fields = fields))).single()
+        val cat = catsOf(page(item(fields = fields))).single()
 
         assertNull(cat.age)
     }
 
     /** 状態がない, または空なら, null. */
     @Test
-    fun parseAdoptionListWithoutStatus() {
+    fun parseAdoptionPageWithoutStatus() {
         val cats =
-            parseAdoptionList(
+            catsOf(
                 page(item(status = ""), item(status = """<div class="centering"> </div>""")),
             )
 
@@ -145,17 +156,17 @@ class AdoptionTest {
 
     /** `data-src` がなければ, `src` の写真を使う. */
     @Test
-    fun parseAdoptionListUsesTheSource() {
-        val cat = parseAdoptionList(page(item(image = """<img src="/b.jpeg">"""))).single()
+    fun parseAdoptionPageUsesTheSource() {
+        val cat = catsOf(page(item(image = """<img src="/b.jpeg">"""))).single()
 
         assertEquals("https://nyantomo.jp/b.jpeg", cat.imageUrl)
     }
 
     /** 写真がない, または, 埋め込みの絵 (data:) だけなら, null. */
     @Test
-    fun parseAdoptionListWithoutImage() {
+    fun parseAdoptionPageWithoutImage() {
         val cats =
-            parseAdoptionList(
+            catsOf(
                 page(
                     item(image = ""),
                     item(image = """<img src="data:image/png;base64,AAAA">"""),
@@ -167,14 +178,73 @@ class AdoptionTest {
 
     /** 一覧はあるが, 猫がいなければ, 空. */
     @Test
-    fun parseAdoptionListOfEmptyList() {
-        assertEquals(emptyList(), parseAdoptionList(page()))
+    fun parseAdoptionPageOfEmptyList() {
+        assertEquals(emptyList(), catsOf(page()))
+    }
+
+    /** 次のページは, canonical の固定ページに, ページの番号を付ける (問い合わせは, 除く). */
+    @Test
+    fun parseAdoptionPageReadsTheNextPage() {
+        val head = """<link rel="canonical" href="https://example.com/list/?x=1">"""
+        val html = pageOf(head, """ data-page="2" data-pages="18"""", item())
+
+        assertEquals(
+            "https://example.com/list/?jsf=jet-engine&pagenum=3",
+            parseAdoptionPage(html).nextUrl,
+        )
+    }
+
+    /** canonical がない, または空なら, ページの URL に, ページの番号を付ける. */
+    @Test
+    fun parseAdoptionPageWithoutCanonical() {
+        val pages = """ data-page="1" data-pages="2""""
+        val empty = """<link rel="canonical" href="">"""
+
+        assertEquals(
+            listOf(
+                "https://example.com/a/?jsf=jet-engine&pagenum=2",
+                "https://example.com/a/?jsf=jet-engine&pagenum=2",
+            ),
+            listOf(pageOf("", pages), pageOf(empty, pages)).map {
+                parseAdoptionPage(it, "https://example.com/a/").nextUrl
+            },
+        )
+    }
+
+    /** 最後のページ, ページの番号がない, 番号が数でないときは, 次のページはない. */
+    @Test
+    fun parseAdoptionPageOfLastPage() {
+        val pages =
+            listOf(
+                """ data-page="18" data-pages="18"""",
+                "",
+                """ data-page="x" data-pages="y"""",
+            )
+
+        assertEquals(
+            listOf(null, null, null),
+            pages.map { parseAdoptionPage(pageOf("", it)).nextUrl },
+        )
     }
 
     /** 一覧が見つからなければ (サイトの作りが変わったら), 失敗する. */
     @Test
-    fun parseAdoptionListFailsWithoutList() {
-        assertFailsWith<AdoptionParseException> { parseAdoptionList("<html><body></body></html>") }
+    fun parseAdoptionPageFailsWithoutList() {
+        assertFailsWith<AdoptionParseException> { parseAdoptionPage("<html><body></body></html>") }
+    }
+
+    /** ページのデータクラスの, 文字列, 複製, 分解が, 使える. */
+    @Test
+    fun pageDataClassFeatures() {
+        val page = AdoptionPage(emptyList(), "https://example.com/")
+
+        assertEquals(page, page.copy())
+        assertEquals(page.hashCode(), page.copy().hashCode())
+        assertEquals("AdoptionPage(cats=[], nextUrl=https://example.com/)", page.toString())
+        assertEquals(
+            listOf(emptyList<AdoptionCat>(), "https://example.com/"),
+            listOf(page.component1(), page.component2()),
+        )
     }
 
     /** データクラスの, 文字列, 複製, 分解が, 使える. */

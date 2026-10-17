@@ -51,7 +51,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 ## プロジェクト構成
 
-- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、里親募集の一覧のページの解析 (`parseAdoptionList`。jsoup)、トークン (`Session`。管理者かの判定 `isAdmin` は画面の出し分けだけに使う)。AWS のクライアントは引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
+- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、里親募集の一覧のページの解析 (`parseAdoptionPage`。jsoup)、トークン (`Session`。管理者かの判定 `isAdmin` は画面の出し分けだけに使う)。AWS のクライアントは引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
 - `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは `SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`、`HomeScreen`、管理者の地図 `AdminMapScreen`)。画面は Material Components の View (Compose は使わない。部品を作る関数は `Views.kt`)。地図のピンには、同じ場所の写真の枚数を書く (`PinIcon.kt`)。ログインのあとは、下のタブ (`HomeTabs`) で、撮影と里親募集 (`AdoptionScreen`) を切り替える。地図は osmdroid (OpenStreetMap)。OpenStreetMap のタイルサーバーには利用ポリシーがある (大量のアクセスを避ける。`userAgentValue` を設定する) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは `core` に置く (UI は単体テストの対象外)。
 - `gradle/libs.versions.toml`: ライブラリとプラグインの版 (版カタログ)。版を変えるときはここだけ。
 - `config/detekt/detekt.yml`: detekt の規則 (既定に上書きするものだけ)。
@@ -68,10 +68,10 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 - 里親募集のタブは、[ニャン友ねっとわーく北海道](https://nyantomo.jp/) の里親募集の一覧 (`https://nyantomo.jp/satooya/`。固定ページに転送される) を、タブを開いたときに取得して、カードで並べる。カードを押すと、サイトの詳しいページを、ブラウザで開く。
 - `robots.txt` は、全てを許可している (2026-10-17 に確認)。利用規約と、写真の転載の決まりは、サイトに書かれていない。
-- **サイトに負荷をかけない**: 一覧は、タブを初めて開いたときと、再読み込みのボタンのときだけ取得する。写真は、同時に 2 つまで取得して、端末のキャッシュに残す (`ImageLoader`)。名乗る User-Agent (`gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)`) を付ける (`SiteFetch.kt`)。
+- **サイトに負荷をかけない**: 一覧は、タブを初めて開いたときと、再読み込みのボタンのときだけ、最初のページを取得する。取得したページは、端末のキャッシュ (`adoption-pages`) に残し、6 時間は取得し直さない (`PageCache`。再読み込みのボタンでは、残したページを使わない。取得に失敗したら、古くても残したページを使う)。一覧は、1 ページに 15 匹で、18 ページほどある (2026-10-17)。次のページは、一覧の終わりの近くまでスクロールしたときに、1 ページずつ取得する (全てのページを、一度には取得しない。取得に失敗したら、再読み込みまで止める)。写真は、同時に 2 つまで取得して、端末のキャッシュに残す (`ImageLoader`)。名乗る User-Agent (`gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)`) を付ける (`SiteFetch.kt`)。
 - **サイトの写真と文章を、リポジトリにも、アプリにも、含めない**: 写真は、実行のときに、サイトの URL から取得する。テストの HTML は、サイトと同じ作りの、ダミーにする (実在の猫の名前や写真を書かない)。
 - 開発者は、ニャン友ねっとわーく北海道の関係者で、アプリで一覧と写真を表示することに、問題はない (2026-10-17 に確認)。写真の権利は、ニャン友ねっとわーく北海道にある。
-- サイトは WordPress (Elementor と JetEngine)。里親募集は REST API に出ていないので、HTML を解析する。一覧の部品 (`.jet-listing-grid__items`) が見つからなければ、`AdoptionParseException` で失敗にする (サイトの作りが変わったことが、画面のエラーで分かる)。
+- サイトは WordPress (Elementor と JetEngine)。里親募集は REST API に出ていないので、HTML を解析する。ページ送りは JetSmartFilters で、次のページは、一覧の固定ページ (`canonical`) に `?jsf=jet-engine&pagenum=N` を付けた URL (`/satooya/` に付けると、転送されず、空の一覧になる)。今のページとページの数は、一覧の部品の `data-page` と `data-pages`。一覧の部品 (`.jet-listing-grid__items`) が見つからなければ、`AdoptionParseException` で失敗にする (サイトの作りが変わったことが、画面のエラーで分かる)。
 
 ## コーディング規約
 

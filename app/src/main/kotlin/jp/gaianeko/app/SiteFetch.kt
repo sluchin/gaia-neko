@@ -9,6 +9,7 @@ package jp.gaianeko.app
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
 /** 接続と読み込みの待ち時間 (ミリ秒). */
 private const val TIMEOUT_MS = 15_000
@@ -38,3 +39,15 @@ fun fetchBytes(url: String): ByteArray {
         connection.disconnect()
     }
 }
+
+/**
+ * URL を, 端末のキャッシュのファイルの名前にする (URL の SHA-256 の, 16 進数).
+ *
+ * @param url URL
+ * @return ファイルの名前
+ */
+fun cacheName(url: String): String =
+    MessageDigest
+        .getInstance("SHA-256")
+        .digest(url.toByteArray())
+        .joinToString("") { "%02x".format(it) }

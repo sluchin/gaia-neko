@@ -13,7 +13,6 @@ import android.util.LruCache
 import android.widget.ImageView
 import java.io.File
 import java.io.IOException
-import java.security.MessageDigest
 import java.util.concurrent.Executors
 
 /** 同時に取得する画像の数 (サイトに負荷をかけない). */
@@ -107,8 +106,5 @@ class ImageLoader(
      * @param url 画像の URL
      * @return ファイル
      */
-    private fun file(url: String): File {
-        val digest = MessageDigest.getInstance("SHA-256").digest(url.toByteArray())
-        return File(dir, digest.joinToString("") { "%02x".format(it) })
-    }
+    private fun file(url: String): File = File(dir, cacheName(url))
 }
