@@ -9,9 +9,7 @@ package jp.gaianeko.app
 import android.content.Context
 import android.view.Gravity
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.FrameLayout
-import android.widget.TextView
 import jp.gaianeko.core.PhotoSource
 import jp.gaianeko.core.Sighting
 import jp.gaianeko.core.SightingGroup
@@ -64,7 +62,7 @@ class AdminMapScreen(
     onClose: () -> Unit,
 ) {
     private val map: MapView
-    private val status = TextView(context)
+    private val status = context.badgeText()
     private var total = 0
 
     /** 画面をまとめた View. */
@@ -84,15 +82,13 @@ class AdminMapScreen(
             }
         view.addView(map, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         view.addView(
-            Button(context).apply {
-                setText(R.string.close)
-                setOnClickListener { onClose() }
-            },
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.TOP or Gravity.END,
-            ),
+            context.materialButton(R.string.close, iconId = R.drawable.ic_close) { onClose() },
+            FrameLayout
+                .LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.TOP or Gravity.END,
+                ).apply { setMargins(0, 0, context.dp(GAP_DP), 0) },
         )
         view.addView(
             status,
@@ -148,7 +144,8 @@ class AdminMapScreen(
     }
 
     /**
-     * 同じ場所の目撃の, ピンを置く (タップすると, 写真を, 次々に見られる. 全て削除すると, ピンを消す).
+     * 同じ場所の目撃の, ピンを置く (ピンに, 写真の枚数を書く. タップすると, 写真を, 次々に見られる.
+     * 全て削除すると, ピンを消す).
      *
      * @param group 同じ場所の目撃
      */
@@ -156,12 +153,16 @@ class AdminMapScreen(
         val sightings = group.sightings.toMutableList()
         val marker = Marker(map)
         marker.position = GeoPoint(group.point.latitude, group.point.longitude)
+        marker.icon = context.pinIcon(sightings.size)
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
         marker.setOnMarkerClickListener { _, _ ->
             SightingDialog(context, scope, photos, remover, sightings) {
                 total--
                 status.text = context.getString(R.string.sighting_count, total)
                 if (sightings.isEmpty()) {
                     map.overlays.remove(marker)
+                } else {
+                    marker.icon = context.pinIcon(sightings.size)
                 }
                 map.invalidate()
             }.show()

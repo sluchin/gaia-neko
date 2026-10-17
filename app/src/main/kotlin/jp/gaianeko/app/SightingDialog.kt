@@ -6,12 +6,11 @@
 
 package jp.gaianeko.app
 
-import android.app.AlertDialog
 import android.content.Context
-import android.graphics.Typeface
 import android.view.Gravity
 import android.widget.LinearLayout
-import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import jp.gaianeko.core.PhotoSource
 import jp.gaianeko.core.Sighting
 import jp.gaianeko.core.SightingRemover
@@ -26,11 +25,11 @@ import java.time.ZoneId
 /** 写真の, 表示する大きさの目安 (px). */
 private const val PHOTO_MAX_PX = 1024
 
-/** 何枚目かの文字の大きさ (sp). */
-private const val COUNTER_TEXT_SP = 20f
-
 /** 余白 (dp). */
 private const val GAP_DP = 8
+
+/** ダイアログの左右の余白 (dp. Material 3 のダイアログの余白に合わせる). */
+private const val SIDE_DP = 24
 
 /**
  * 同じ場所の写真を, 1 枚ずつ表示するダイアログ (左右にスワイプして, 次々に見る. 写真を長押しすると, 削除する).
@@ -51,34 +50,37 @@ class SightingDialog(
     private val onRemoved: (Sighting) -> Unit,
 ) {
     private var index = 0
-    private val details = TextView(context)
+    private val details =
+        context.styledText(
+            com.google.android.material.R.style.TextAppearance_Material3_BodyMedium,
+            com.google.android.material.R.attr.colorOnSurfaceVariant,
+        )
     private val counter =
-        TextView(context).apply {
-            gravity = Gravity.CENTER
-            textSize = COUNTER_TEXT_SP
-            setTypeface(typeface, Typeface.BOLD)
-        }
-    private val hint = TextView(context).apply { setText(R.string.photo_hint) }
+        context.badgeText().apply { gravity = Gravity.CENTER }
+    private val hint =
+        context
+            .styledText(
+                com.google.android.material.R.style.TextAppearance_Material3_BodySmall,
+                com.google.android.material.R.attr.colorOnSurfaceVariant,
+            ).apply { setText(R.string.photo_hint) }
     private val image =
         SwipeImageView(context, { move(it) }, { confirmRemove() })
     private val dialog: AlertDialog =
-        AlertDialog
-            .Builder(context)
+        MaterialAlertDialogBuilder(context)
             .setView(
                 LinearLayout(context).apply {
                     orientation = LinearLayout.VERTICAL
-                    details.setPadding(
-                        context.dp(GAP_DP * 2),
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    setPadding(
+                        context.dp(SIDE_DP),
                         context.dp(GAP_DP),
-                        context.dp(
-                            GAP_DP * 2,
-                        ),
-                        context.dp(GAP_DP),
+                        context.dp(SIDE_DP),
+                        0,
                     )
                     addView(counter)
-                    addView(details)
-                    addView(hint)
-                    addView(image)
+                    addSpaced(image, GAP_DP * 2)
+                    addSpaced(details, GAP_DP * 2)
+                    addSpaced(hint, GAP_DP)
                 },
             ).setPositiveButton(R.string.close, null)
             .create()
@@ -129,8 +131,7 @@ class SightingDialog(
 
     /** 削除してよいかを, 確認する (長押しのとき). */
     private fun confirmRemove() {
-        AlertDialog
-            .Builder(context)
+        MaterialAlertDialogBuilder(context)
             .setMessage(R.string.delete_confirm)
             .setPositiveButton(R.string.delete) { _, _ -> remove() }
             .setNegativeButton(R.string.cancel, null)

@@ -29,4 +29,18 @@
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error: %1$s</string>
+    <string name="tagline">Record the cats you meet outside.</string>
+    <string name="role_user">User</string>
+    <string name="role_admin">Administrator</string>
+    <string name="capture_note">Only the administrators can see the photos and the places.</string>
+    <string name="tab_capture">Photo</string>
+    <string name="tab_adoption">Adoption</string>
+    <string name="adoption_title">Cats looking for a home</string>
+    <string name="adoption_source">From the adoption list of Nyantomo Network Hokkaido. Tap a cat to open its page on the site.</string>
+    <plurals name="adoption_count">
+        <item quantity="one">%1$d cat</item>
+        <item quantity="other">%1$d cats</item>
+    </plurals>
+    <string name="adoption_empty">No cats are listed now.</string>
+    <string name="reload">Reload</string>
 </resources>

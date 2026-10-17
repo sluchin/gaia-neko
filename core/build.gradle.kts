@@ -21,6 +21,8 @@ dependencies {
     api(libs.aws.dynamodb)
     api(libs.aws.s3)
     api(libs.coroutines.core)
+    // 里親募集の一覧のページ (HTML) を解析する
+    implementation(libs.jsoup)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.junit.jupiter)

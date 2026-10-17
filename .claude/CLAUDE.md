@@ -51,8 +51,8 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 ## プロジェクト構成
 
-- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、トークン (`Session`。管理者かの判定 `isAdmin` は画面の出し分けだけに使う)。AWS のクライアントは引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
-- `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは `SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`、`HomeScreen`、管理者の地図 `AdminMapScreen`)。地図は osmdroid (OpenStreetMap)。OpenStreetMap のタイルサーバーには利用ポリシーがある (大量のアクセスを避ける。`userAgentValue` を設定する) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは `core` に置く (UI は単体テストの対象外)。
+- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、里親募集の一覧のページの解析 (`parseAdoptionList`。jsoup)、トークン (`Session`。管理者かの判定 `isAdmin` は画面の出し分けだけに使う)。AWS のクライアントは引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
+- `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは `SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`、`HomeScreen`、管理者の地図 `AdminMapScreen`)。画面は Material Components の View (Compose は使わない。部品を作る関数は `Views.kt`)。地図のピンには、同じ場所の写真の枚数を書く (`PinIcon.kt`)。ログインのあとは、下のタブ (`HomeTabs`) で、撮影と里親募集 (`AdoptionScreen`) を切り替える。地図は osmdroid (OpenStreetMap)。OpenStreetMap のタイルサーバーには利用ポリシーがある (大量のアクセスを避ける。`userAgentValue` を設定する) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは `core` に置く (UI は単体テストの対象外)。
 - `gradle/libs.versions.toml`: ライブラリとプラグインの版 (版カタログ)。版を変えるときはここだけ。
 - `config/detekt/detekt.yml`: detekt の規則 (既定に上書きするものだけ)。
 - `Dockerfile` (2 段: dev と emulator) / `docker-compose.yml` / `scripts/`: 開発環境 (thermon と同じ)。`.github/`: GitHub Actions。`SETUP.md`: 環境構築。`README.md`: 設計。
@@ -63,6 +63,15 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 - **アクセスキーをアプリや、リポジトリに入れない。** 必ずCognito の一時的な認証情報を使う。署名の鍵 (`*.jks`、`*.keystore`) も、コミットしない。
 - **権限の方針 (最小権限)**: 認証した利用者のロールは S3 の写真の書き込み (`s3:PutObject`。自分の `photos/<自分の ID>/` だけ) と、DynamoDB の書き込み (`dynamodb:PutItem`) だけ。**読み取りの権限を付けない。** 管理者のグループのロールだけが、DynamoDB の `Query` / `Scan` / `DeleteItem` と、S3 の `GetObject` / `DeleteObject` を持つ (管理者は利用者のロールではなく、管理者のロールだけになるので、管理者のロールにも、利用者と同じ書き込み (自分の分だけ) を付ける)。S3 のバケットは公開しない (パブリックアクセスのブロック)。
 - **位置と写真をログや、エラーのメッセージに出さない。** テストや文書の例の位置は実在の場所を避けた、ダミーの値にする。
+
+## 里親募集 (ニャン友ねっとわーく北海道)
+
+- 里親募集のタブは、[ニャン友ねっとわーく北海道](https://nyantomo.jp/) の里親募集の一覧 (`https://nyantomo.jp/satooya/`。固定ページに転送される) を、タブを開いたときに取得して、カードで並べる。カードを押すと、サイトの詳しいページを、ブラウザで開く。
+- `robots.txt` は、全てを許可している (2026-10-17 に確認)。利用規約と、写真の転載の決まりは、サイトに書かれていない。
+- **サイトに負荷をかけない**: 一覧は、タブを初めて開いたときと、再読み込みのボタンのときだけ取得する。写真は、同時に 2 つまで取得して、端末のキャッシュに残す (`ImageLoader`)。名乗る User-Agent (`gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)`) を付ける (`SiteFetch.kt`)。
+- **サイトの写真と文章を、リポジトリにも、アプリにも、含めない**: 写真は、実行のときに、サイトの URL から取得する。テストの HTML は、サイトと同じ作りの、ダミーにする (実在の猫の名前や写真を書かない)。
+- 開発者は、ニャン友ねっとわーく北海道の関係者で、アプリで一覧と写真を表示することに、問題はない (2026-10-17 に確認)。写真の権利は、ニャン友ねっとわーく北海道にある。
+- サイトは WordPress (Elementor と JetEngine)。里親募集は REST API に出ていないので、HTML を解析する。一覧の部品 (`.jet-listing-grid__items`) が見つからなければ、`AdoptionParseException` で失敗にする (サイトの作りが変わったことが、画面のエラーで分かる)。
 
 ## コーディング規約
 
@@ -133,6 +142,9 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
 ## 落とし穴 (検証で分かったこと。詳細は SETUP.md)
 
 - `compileSdk` は 37 以上 (AWS SDK が使う OkHttp 5.5 の要求)。`buildToolsVersion` は `37.0.0` に固定する (コンテナの SDK は読み取り専用)。足りない SDK のコンポーネントは `Dockerfile` に足して、イメージを作り直す。
+- 配色は `res/values/colors.xml` と `res/values-night/colors.xml` (アイコンの青緑と橙。ライトとダーク)。Material の部品は `Theme.GaiaNeko` (`Theme.Material3.DayNight`) と `AppCompatActivity` で使う。テーマの色を、コードで読むときは `MaterialColors.getColor` (`colorPrimary` は `androidx.appcompat.R.attr`、そのほかは `com.google.android.material.R.attr`)。
+- 文字だけのボタンは `androidx.appcompat.R.attr.borderlessButtonStyle` (Material 3 の TextButton) を使う (`android.R.attr.borderlessButtonStyle` は、古い見た目で、大文字になり、アイコンの色が付かない)。`MaterialButton` に `setTextAppearance` を使うと、文字の色も変わるので、ボタンの色 (`textColors`) を戻す。
+- AppCompat は core-ktx を連れてくるので、Android Lint の `UseKtx` が、KTX の関数 (`SharedPreferences.edit { }`、`createBitmap`、`toDrawable` など) を求める。
 - `.gitignore` は `*.jar` を無視する。Gradle ラッパーの `gradle-wrapper.jar` だけ、例外にしてある。
 - AWS SDK の `getId { }` などの DSL は拡張関数なので、`import aws.sdk.kotlin.services.cognitoidentity.getId` のように、インポートが要る。
 - Cognito や DynamoDB の DSL (`QueryRequest { }` など) の中では、`inline` でない関数 (`joinToString` など) の引数の中から、中断関数を呼べない。`map` などの `inline` の関数を使う。

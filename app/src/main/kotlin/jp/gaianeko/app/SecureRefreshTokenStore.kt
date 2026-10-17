@@ -9,6 +9,7 @@ package jp.gaianeko.app
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import androidx.core.content.edit
 import jp.gaianeko.core.RefreshTokenStore
 import java.security.GeneralSecurityException
 import java.security.KeyStore
@@ -83,15 +84,13 @@ class SecureRefreshTokenStore(
      * @param token 更新トークン. null なら, 消す
      */
     override fun save(token: String?) {
-        prefs
-            .edit()
-            .apply {
-                if (token == null) {
-                    remove(PREF_KEY)
-                } else {
-                    putString(PREF_KEY, Base64.getEncoder().encodeToString(encrypt(token)))
-                }
-            }.apply()
+        prefs.edit {
+            if (token == null) {
+                remove(PREF_KEY)
+            } else {
+                putString(PREF_KEY, Base64.getEncoder().encodeToString(encrypt(token)))
+            }
+        }
     }
 
     /**

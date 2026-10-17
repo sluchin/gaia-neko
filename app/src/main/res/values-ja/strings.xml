@@ -28,4 +28,17 @@
     <string name="delete">削除</string>
     <string name="cancel">キャンセル</string>
     <string name="error">エラー: %1$s</string>
+    <string name="tagline">外で出会った猫を記録します。</string>
+    <string name="role_user">利用者</string>
+    <string name="role_admin">管理者</string>
+    <string name="capture_note">写真と場所は、管理者だけが見られます。</string>
+    <string name="tab_capture">撮影</string>
+    <string name="tab_adoption">里親募集</string>
+    <string name="adoption_title">里親募集中の猫</string>
+    <string name="adoption_source">ニャン友ねっとわーく北海道の里親募集より。猫をタップすると、サイトの詳しいページを開きます。</string>
+    <plurals name="adoption_count">
+        <item quantity="other">%1$d 匹</item>
+    </plurals>
+    <string name="adoption_empty">今、募集している猫はいません。</string>
+    <string name="reload">再読み込み</string>
 </resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ダークテーマ -->
+    <color name="primary">#8BD0E6</color>
+    <color name="on_primary">#003543</color>
+    <color name="primary_container">#004D5F</color>
+    <color name="on_primary_container">#B4EBFF</color>
+    <color name="secondary">#B2CBD3</color>
+    <color name="secondary_container">#344A51</color>
+    <color name="on_secondary_container">#CEE7EF</color>
+    <color name="tertiary">#F4A261</color>
+    <color name="tertiary_container">#713700</color>
+    <color name="on_tertiary_container">#FFDCC5</color>
+    <color name="background">#0F1416</color>
+    <color name="on_background">#DEE3E6</color>
+    <color name="surface_variant">#3F484C</color>
+    <color name="on_surface_variant">#BFC8CC</color>
+    <color name="outline">#899296</color>
+    <color name="surface_container_lowest">#0A0F11</color>
+    <color name="surface_container_low">#171C1E</color>
+    <color name="surface_container">#1B2022</color>
+    <color name="surface_container_high">#252B2D</color>
+    <color name="surface_container_highest">#303638</color>
+    <bool name="light_system_bars">false</bool>
+</resources>

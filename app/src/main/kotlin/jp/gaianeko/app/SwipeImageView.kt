@@ -10,14 +10,19 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
-import android.widget.ImageView
+import com.google.android.material.imageview.ShapeableImageView
+import com.google.android.material.shape.CornerFamily
+import com.google.android.material.shape.ShapeAppearanceModel
 import kotlin.math.abs
 
 /** 横にスワイプしたと判定する, 最小の速さ (px/s). */
 private const val SWIPE_MIN_VELOCITY = 300f
 
+/** 写真の角の丸み (dp). */
+private const val CORNER_DP = 16
+
 /**
- * 左右のスワイプと, 長押しを, 受け取る画像 (写真を, 次々に見る. 長押しで, 削除する).
+ * 左右のスワイプと, 長押しを, 受け取る画像 (写真を, 次々に見る. 長押しで, 削除する. 角を丸くする).
  *
  * コードからだけ作る (レイアウトの XML には書かない) ので, XML 用のコンストラクタは, 作らない.
  *
@@ -30,7 +35,7 @@ class SwipeImageView(
     context: Context,
     onSwipe: (Int) -> Unit,
     onLongPress: () -> Unit,
-) : ImageView(context) {
+) : ShapeableImageView(context) {
     private val detector =
         GestureDetector(
             context,
@@ -54,6 +59,16 @@ class SwipeImageView(
                 override fun onLongPress(e: MotionEvent) = onLongPress()
             },
         )
+
+    init {
+        adjustViewBounds = true
+        scaleType = ScaleType.FIT_CENTER
+        shapeAppearanceModel =
+            ShapeAppearanceModel
+                .builder()
+                .setAllCorners(CornerFamily.ROUNDED, context.dp(CORNER_DP).toFloat())
+                .build()
+    }
 
     /**
      * タッチを, 受け取る (スワイプと, 長押しの判定に渡す).

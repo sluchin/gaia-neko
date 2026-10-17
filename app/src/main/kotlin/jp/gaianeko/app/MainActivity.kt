@@ -6,11 +6,11 @@
 
 package jp.gaianeko.app
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ScrollView
-import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import jp.gaianeko.core.Session
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,15 +23,17 @@ import kotlinx.coroutines.withContext
  * 最初の画面 (ログインの状態で, 画面を切り替える).
  *
  * AWS の設定がなければ, その旨を表示する. 保存した更新トークンがあれば, ログインの画面を飛ばす.
- * ログインしたあとは, 撮影の画面になる. 管理者には, 地図の画面へのボタンも出る.
+ * ログインしたあとは, 下のタブで, 撮影と里親募集の画面を切り替える. 管理者には, 地図の画面へのボタンも出る.
  */
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private lateinit var root: ScrollView
     private var stack: AuthStack? = null
     private var login: LoginController? = null
     private var capture: CaptureController? = null
     private var map: AdminMapScreen? = null
+    private val images by lazy { ImageLoader(this) }
+    private val adoption by lazy { AdoptionScreen(this, scope, images) }
 
     /**
      * 画面を作る.
@@ -45,12 +47,12 @@ class MainActivity : Activity() {
         setContentView(root)
 
         if (BuildConfig.IDENTITY_POOL_ID.isEmpty() || BuildConfig.BUCKET_NAME.isEmpty()) {
-            root.showContent(TextView(this).apply { text = getString(R.string.not_configured) })
+            root.showContent(cardText().apply { showOrHide(getString(R.string.not_configured)) })
             return
         }
         val authStack = AuthStack(this).also { stack = it }
         val controller =
-            LoginController(this, scope, authStack, root::showContent) { showHome(it) }
+            LoginController(this, scope, authStack, ::showInRoot) { showHome(it) }
                 .also { login = it }
         scope.launch {
             val restored =
@@ -65,13 +67,24 @@ class MainActivity : Activity() {
     }
 
     /**
-     * ログインしたあとの画面を表示する (撮影と, ログアウト. 管理者には, 地図のボタンも).
+     * スクロールする画面 (ログインの画面など) に, 中身を表示する.
+     *
+     * @param content 表示する View
+     */
+    private fun showInRoot(content: View) {
+        if (root.parent == null) {
+            setContentView(root)
+        }
+        root.showContent(content)
+    }
+
+    /**
+     * ログインしたあとの画面を表示する (下のタブで, 撮影と, 里親募集. 管理者には, 地図のボタンも).
      *
      * @param session トークン
      */
     private fun showHome(session: Session) {
         val authStack = checkNotNull(stack)
-        val status = if (session.isAdmin) R.string.signed_in_admin else R.string.signed_in_user
         lateinit var screen: HomeScreen
         val controller =
             CaptureController(
@@ -84,9 +97,9 @@ class MainActivity : Activity() {
         screen =
             HomeScreen(
                 this,
-                status,
+                session.isAdmin,
                 onCapture = controller::start,
-                onMap = if (session.isAdmin) ({ showMap(session) }) else null,
+                onMap = { showMap(session) },
                 onSignOut = {
                     authStack.manager.signOut()
                     capture = null
@@ -94,7 +107,7 @@ class MainActivity : Activity() {
                 },
             )
         capture = controller
-        root.showContent(screen.view)
+        setContentView(HomeTabs(this, screen.view, adoption).view)
     }
 
     /**
@@ -111,7 +124,6 @@ class MainActivity : Activity() {
             AdminMapScreen(this, scope, authStack.sightings, authStack.photos, authStack.remover) {
                 map?.onDestroy()
                 map = null
-                setContentView(root)
                 showHome(session)
             }
         map = screen
@@ -169,6 +181,7 @@ class MainActivity : Activity() {
     /** 画面を閉じるときに, 通信中の処理を止める. */
     override fun onDestroy() {
         map?.onDestroy()
+        images.shutdown()
         scope.cancel()
         super.onDestroy()
     }
