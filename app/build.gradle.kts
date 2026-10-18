@@ -85,6 +85,11 @@ android {
     }
 }
 
+// APK の名前を, リポジトリの名前と版にする (例: gaia-neko-0.1.0-debug.apk. 後ろに, ビルドの種類が付く)
+base {
+    archivesName = "gaia-neko-${android.defaultConfig.versionName}"
+}
+
 dependencies {
     implementation(project(":core"))
     // FileProvider (カメラに, 撮影した写真の置き場所を渡す)

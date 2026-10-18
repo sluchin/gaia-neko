@@ -56,7 +56,7 @@ jobs:
         if: matrix.service == 'build' && success()
         with:
           name: gaia_neko_apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/gaia-neko-*-debug.apk
           if-no-files-found: error
           retention-days: 3
 

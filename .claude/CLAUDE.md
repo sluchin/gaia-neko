@@ -14,7 +14,7 @@ Kotlin で作る Android アプリ (gaia-neko)。外で見つけた猫を利用�
 - `docker compose run` には必ず `--rm` を付ける (終わったコンテナを残さないため)。
 - `UID` と `GID` をシェルでエクスポートしておく (生成物が root 所有にならないように。`SETUP.md` の「2. ホストのユーザー ID を環境変数にエクスポートする」)。
 - イメージのビルド: `docker compose build` (`Dockerfile` を変えたときも)
-- ビルド (デバッグ APK): `docker compose run --rm build` (`app/build/outputs/apk/debug/app-debug.apk`)
+- ビルド (デバッグ APK): `docker compose run --rm build` (`app/build/outputs/apk/debug/gaia-neko-<版>-debug.apk`)
 - 単体テスト: `docker compose run --rm test`
 - カバレッジ (`core` の行と分岐が 100%): `docker compose run --rm coverage`
 - 整形の確認: `docker compose run --rm format` / 整形して書き換える: `docker compose run --rm format-fix`
@@ -22,10 +22,10 @@ Kotlin で作る Android アプリ (gaia-neko)。外で見つけた猫を利用�
 - ドキュメント (Dokka): `docker compose run --rm docs` (`core/build/dokka/html/index.html`)
 - クリーン: `docker compose run --rm clean` (`build/`、`.gradle/`、`.kotlin/` を消す。Gradle のキャッシュは消さない)
 - 開発シェル: `docker compose run --rm dev`
-- エミュレータ (KVM。`export KVM_GID=$(getent group kvm | cut -d: -f3)` が要る。イメージは約 10.7 GB): `docker compose build emulator` → `docker compose up -d emulator` → `docker compose exec emulator scripts/emulator-wait.sh` → `docker compose exec emulator adb install -r app/build/outputs/apk/debug/app-debug.apk`。画面は <http://localhost:6080/vnc.html>、画像にするときは `adb exec-out screencap -p > build/emulator-screen.png`。止めるのは `docker compose down` (`SETUP.md` の「エミュレータ (Docker)」) (中で `./gradlew ...` を直接実行できる)
+- エミュレータ (KVM。`export KVM_GID=$(getent group kvm | cut -d: -f3)` が要る。イメージは約 10.7 GB): `docker compose build emulator` → `docker compose up -d emulator` → `docker compose exec emulator scripts/emulator-wait.sh` → `docker compose exec emulator adb install -r app/build/outputs/apk/debug/gaia-neko-*-debug.apk`。画面は <http://localhost:6080/vnc.html>、画像にするときは `adb exec-out screencap -p > build/emulator-screen.png`。止めるのは `docker compose down` (`SETUP.md` の「エミュレータ (Docker)」) (中で `./gradlew ...` を直接実行できる)
 
 ### 実機への転送 (ホストの adb)
-- `adb install -r app/build/outputs/apk/debug/app-debug.apk` (ホストに adb を入れる。`SETUP.md` の「実機へのインストール」と「アプリを動かして確認する」)
+- `adb install -r app/build/outputs/apk/debug/gaia-neko-*-debug.apk` (ホストに adb を入れる。`SETUP.md` の「実機へのインストール」と「アプリを動かして確認する」)
 
 ### クラウドのセッション (claude.ai/code) で Docker を使うとき
 
@@ -117,7 +117,7 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
 ## 開発フロー
 
 1. Push 時に GitHub Actions (`.github/workflows/build.yml`) が開発用の Docker イメージ (ローカルと同じ環境) で `docker compose` のサービスを実行する (`SETUP.md` の「CI (GitHub Actions)」)。
-   - `check` ジョブ: `build` / `test` / `coverage` / `format` / `analyze` をサービスごとに実行する。失敗したら、ジョブが失敗する。実行のログをアーティファクト (`<サービス名>_log`。`build_log` など) として保存する (失敗したときも保存する)。`build` のときはデバッグ用の APK (`app/build/outputs/apk/debug/app-debug.apk`。デバッグ鍵で署名) も、アーティファクト `gaia_neko_apk` として保存する (成功したときだけ)。リリース用の署名の鍵 (`*.jks`、`*.keystore`) はリポジトリにも、CI にも、置かない。
+   - `check` ジョブ: `build` / `test` / `coverage` / `format` / `analyze` をサービスごとに実行する。失敗したら、ジョブが失敗する。実行のログをアーティファクト (`<サービス名>_log`。`build_log` など) として保存する (失敗したときも保存する)。`build` のときはデバッグ用の APK (`app/build/outputs/apk/debug/gaia-neko-<版>-debug.apk`。デバッグ鍵で署名) も、アーティファクト `gaia_neko_apk` として保存する (成功したときだけ)。リリース用の署名の鍵 (`*.jks`、`*.keystore`) はリポジトリにも、CI にも、置かない。
    - `docs` ジョブ: `docs` (Dokka の HTML。警告があれば失敗する)。生成したドキュメントをアーティファクト `docs` と、ログ `docs_log` に保存する。
    - `deploy-docs` ジョブ: main への push のときだけ、ドキュメントを GitHub Pages に公開する (リポジトリの Settings > Pages > Source を「GitHub Actions」にしておく)。
    - `cleanup` ジョブ: 3 日より前の実行 (ログと artifact) を push のたびに削除する (権限は `actions: write`)。artifact は `retention-days: 3` で 3 日で期限が切れる。保存する期間を変えるときは `build.yml` の `KEEP_DAYS` と、全ての `retention-days` をそろえて変える。

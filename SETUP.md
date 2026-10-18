@@ -21,7 +21,7 @@ export UID GID=$(id -g)
 
 ```bash
 docker compose build                  # 開発用のイメージを作る (Dockerfile を変えたときも)
-docker compose run --rm build         # デバッグ用の APK (app/build/outputs/apk/debug/app-debug.apk)
+docker compose run --rm build         # デバッグ用の APK (app/build/outputs/apk/debug/gaia-neko-<版>-debug.apk)
 docker compose run --rm test          # 単体テスト
 docker compose run --rm coverage      # core の行と分岐のカバレッジ 100%
 docker compose run --rm format        # 整形の確認 (ktlint)
