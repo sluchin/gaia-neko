@@ -20,6 +20,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** ログのタグ. */
+private const val TAG = "Session"
+
 /** 設定の画面を開く要求の番号 (撮影の流れの番号と, 重ならないように). */
 private const val REQUEST_SETTINGS = 10
 
@@ -66,6 +69,8 @@ class MainActivity : AppCompatActivity() {
             val restored =
                 runCatching { withContext(Dispatchers.IO) { authStack.manager.restore() } }
             val session = restored.getOrNull()
+            restored.exceptionOrNull()?.let { AppLog.w(TAG, "Could not restore the session", it) }
+            AppLog.d(TAG) { "Restored the session: ${session != null}" }
             if (session == null) {
                 controller.showLogin(restored.exceptionOrNull()?.message)
             } else {

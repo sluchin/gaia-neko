@@ -13,6 +13,9 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 
+/** ログのタグ. */
+private const val TAG = "Adoption"
+
 /** 猫の一覧を保存するファイル (アプリのデータのフォルダの中) の名前. */
 internal const val ADOPTION_CATS_FILE = "adoption-cats.json"
 
@@ -49,7 +52,6 @@ class CatStore(
      *
      * @return 猫. 保存していないか, 読めなければ, null
      */
-    @Suppress("SwallowedException")
     fun read(): List<AdoptionCat>? {
         if (!file.exists()) {
             return null
@@ -58,6 +60,7 @@ class CatStore(
             val array = JSONArray(file.readText())
             List(array.length()) { toCat(array.getJSONObject(it)) }
         } catch (e: JSONException) {
+            AppLog.w(TAG, "Could not read ${file.name}", e)
             null
         }
     }

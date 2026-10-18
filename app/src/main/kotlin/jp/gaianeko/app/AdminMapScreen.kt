@@ -29,6 +29,9 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import java.io.File
 
+/** ログのタグ. */
+private const val TAG = "Map"
+
 /** 最初に表示する, 地図の拡大率 (目撃がないとき). */
 private const val DEFAULT_ZOOM = 5.0
 
@@ -122,8 +125,13 @@ class AdminMapScreen(
         status.text = context.getString(R.string.loading)
         scope.launch {
             runCatching { withContext(Dispatchers.IO) { sightings.all() } }
-                .onSuccess { showPins(it) }
-                .onFailure { status.text = context.getString(R.string.error, it.message) }
+                .onSuccess {
+                    AppLog.i(TAG, "Loaded ${it.size} sightings")
+                    showPins(it)
+                }.onFailure {
+                    AppLog.e(TAG, "Could not load the sightings", it)
+                    status.text = context.getString(R.string.error, it.message)
+                }
         }
     }
 

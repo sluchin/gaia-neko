@@ -22,6 +22,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.ZoneId
 
+/** ログのタグ. */
+private const val TAG = "Map"
+
 /** 写真の, 表示する大きさの目安 (px). */
 private const val PHOTO_MAX_PX = 1024
 
@@ -125,7 +128,10 @@ class SightingDialog(
                     ) {
                         image.setImageBitmap(decodePhoto(jpeg, PHOTO_MAX_PX))
                     }
-                }.onFailure { details.text = context.getString(R.string.error, it.message) }
+                }.onFailure {
+                    AppLog.w(TAG, "Could not load the photo", it)
+                    details.text = context.getString(R.string.error, it.message)
+                }
         }
     }
 
@@ -144,6 +150,7 @@ class SightingDialog(
         scope.launch {
             runCatching { withContext(Dispatchers.IO) { remover.remove(sighting) } }
                 .onSuccess {
+                    AppLog.i(TAG, "Removed a sighting")
                     sightings.remove(sighting)
                     onRemoved(sighting)
                     if (sightings.isEmpty()) {
@@ -152,7 +159,10 @@ class SightingDialog(
                         index = index.coerceAtMost(sightings.size - 1)
                         showCurrent()
                     }
-                }.onFailure { details.text = context.getString(R.string.error, it.message) }
+                }.onFailure {
+                    AppLog.e(TAG, "Could not remove the sighting", it)
+                    details.text = context.getString(R.string.error, it.message)
+                }
         }
     }
 }

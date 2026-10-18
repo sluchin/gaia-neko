@@ -25,6 +25,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/** ログのタグ. */
+private const val TAG = "Capture"
+
 /** 位置の権限を求めるときの, 要求の番号. */
 private const val REQUEST_LOCATION = 1
 
@@ -116,8 +119,14 @@ class CaptureController(
             val message =
                 runCatching { withContext(Dispatchers.IO) { save() } }
                     .fold(
-                        { activity.getString(it) },
-                        { activity.getString(R.string.error, it.message) },
+                        {
+                            AppLog.i(TAG, "Saved a sighting")
+                            activity.getString(it)
+                        },
+                        {
+                            AppLog.e(TAG, "Could not save the sighting", it)
+                            activity.getString(R.string.error, it.message)
+                        },
                     )
             file.delete()
             onMessage(message)

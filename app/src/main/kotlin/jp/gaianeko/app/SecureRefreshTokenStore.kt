@@ -19,6 +19,9 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+/** ログのタグ. */
+private const val TAG = "Token"
+
 /** Android Keystore の名前. */
 private const val KEYSTORE = "AndroidKeyStore"
 
@@ -66,13 +69,12 @@ class SecureRefreshTokenStore(
         return stored?.let {
             try {
                 decrypt(Base64.getDecoder().decode(it))
-            } catch (
-                @Suppress("SwallowedException") e: GeneralSecurityException,
-            ) {
+            } catch (e: GeneralSecurityException) {
+                // トークンそのものは, 書かない
+                AppLog.w(TAG, "Could not decrypt the saved refresh token", e)
                 null
-            } catch (
-                @Suppress("SwallowedException") e: IllegalArgumentException,
-            ) {
+            } catch (e: IllegalArgumentException) {
+                AppLog.w(TAG, "The saved refresh token is broken", e)
                 null
             }
         }

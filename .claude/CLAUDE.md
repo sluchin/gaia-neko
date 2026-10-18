@@ -64,6 +64,13 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 - **権限の方針 (最小権限)**: 認証した利用者のロールは S3 の写真の書き込み (`s3:PutObject`。自分の `photos/<自分の ID>/` だけ) と、DynamoDB の書き込み (`dynamodb:PutItem`) だけ。**読み取りの権限を付けない。** 管理者のグループのロールだけが、DynamoDB の `Query` / `Scan` / `DeleteItem` と、S3 の `GetObject` / `DeleteObject` を持つ (管理者は利用者のロールではなく、管理者のロールだけになるので、管理者のロールにも、利用者と同じ書き込み (自分の分だけ) を付ける)。S3 のバケットは公開しない (パブリックアクセスのブロック)。
 - **位置と写真をログや、エラーのメッセージに出さない。** テストや文書の例の位置は実在の場所を避けた、ダミーの値にする。
 
+## ログ
+
+- ログは `AppLog` (`AppLog.kt`) だけを使う (`android.util.Log` を直接呼ばない)。タグは、ファイルごとの `private const val TAG` (機能の名前)。
+- `AppLog.d` はデバッグ版だけ出す (判定は、関数の中の `BuildConfig.DEBUG`。引数は、文字列を返す関数にして、リリース版では文字列も作らない)。`AppLog.i` (最低限の情報)、`AppLog.w` (失敗したが続けられる)、`AppLog.e` (利用者の操作が失敗した) は、リリース版でも出す。
+- メールアドレス、パスワード、トークン、確認コードは、どのレベルでも書かない。ログの文字は英語。
+- 落ちたときの例外は、Android が logcat に出し、Google Play では Play Console の Android Vitals が集める (コードは要らない)。見方は `SETUP.md` の「ログを見る」。
+
 ## メニューと設定
 
 - ログインしたあとの画面は、`HomeDrawer` (DrawerLayout と NavigationView。`androidx.drawerlayout`) で包む。上のバーの三本線は `ActionBarDrawerToggle`。ログインや地図の画面に切り替えるときは、`detach()` で、三本線と、戻るの操作を外す。

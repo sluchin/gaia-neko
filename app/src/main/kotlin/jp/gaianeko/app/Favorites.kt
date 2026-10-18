@@ -19,6 +19,9 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 
+/** ログのタグ. */
+private const val TAG = "Favorites"
+
 /** 募集が終わった (譲渡済み) お気に入りの URL を保存するファイル (アプリのデータのフォルダの中) の名前. */
 private const val CLOSED_FILE = "adoption-favorites-closed.json"
 
@@ -86,8 +89,10 @@ class Favorites(
     fun toggle(cat: AdoptionCat) {
         if (list.removeAll { it.url == cat.url }) {
             closed -= cat.url
+            AppLog.d(TAG) { "Removed a favorite: ${cat.url}" }
         } else {
             list.add(0, cat)
+            AppLog.d(TAG) { "Added a favorite: ${cat.url}" }
         }
         changed()
         save()
@@ -109,11 +114,13 @@ class Favorites(
             loading.join()
             for (cat in list.toList()) {
                 val open = withContext(Dispatchers.IO) { isOpen(cat.url) } ?: continue
+                AppLog.d(TAG) { "${cat.url}: ${if (open) "open" else "closed"}" }
                 val changed = if (open) closed.remove(cat.url) else closed.add(cat.url)
                 if (changed) {
                     changed()
                 }
             }
+            AppLog.i(TAG, "Checked ${list.size} favorites, ${closed.size} closed")
             save()
         }
     }
@@ -147,7 +154,6 @@ class Favorites(
      *
      * @return URL (保存していないか, 読めなければ, 空)
      */
-    @Suppress("SwallowedException")
     private fun readClosed(): List<String> {
         if (!closedFile.exists()) {
             return emptyList()
@@ -156,6 +162,7 @@ class Favorites(
             val array = JSONArray(closedFile.readText())
             List(array.length()) { array.getString(it) }
         } catch (e: JSONException) {
+            AppLog.w(TAG, "Could not read $CLOSED_FILE", e)
             emptyList()
         }
     }
@@ -166,15 +173,16 @@ class Favorites(
      * @param url 詳しいページの URL
      * @return 募集していれば, true. 終わっていれば, false. 通信に失敗したら, null
      */
-    @Suppress("SwallowedException")
     private fun isOpen(url: String): Boolean? =
         try {
             isAdoptionOpen(String(fetchBytes(url), Charsets.UTF_8))
         } catch (e: HttpStatusException) {
             val gone =
                 e.code == HttpURLConnection.HTTP_NOT_FOUND || e.code == HttpURLConnection.HTTP_GONE
+            AppLog.d(TAG) { "$url: HTTP ${e.code}" }
             if (gone) false else null
         } catch (e: IOException) {
+            AppLog.w(TAG, "Could not check a favorite", e)
             null
         }
 }

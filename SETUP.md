@@ -34,6 +34,21 @@ docker compose run --rm dev           # 開発シェル
 
 `docker compose run` には必ず `--rm` を付けます。
 
+### ログを見る
+
+アプリのログは、Android の logcat に出ます (`app/src/main/kotlin/jp/gaianeko/app/AppLog.kt`)。タグは機能ごとです (`Adoption`、`Favorites`、`Images`、`Capture`、`Login`、`Session`、`Map`、`Settings`、`Token`)。
+
+```bash
+# エミュレータ (Docker) のログを、タグで絞って見る (D はデバッグ以上)
+docker compose exec emulator adb logcat -s Adoption:D Favorites:D AndroidRuntime:E
+# 実機 (USB でつなぐ) なら
+adb logcat -s Adoption:D Favorites:D AndroidRuntime:E
+```
+
+- デバッグのログ (`AppLog.d`) は、デバッグ版 (`assembleDebug`) だけで出ます。リリース版では、情報 (`AppLog.i`)、警告 (`AppLog.w`)、エラー (`AppLog.e`) だけが出ます。
+- アプリが落ちたときの例外は、`AndroidRuntime` のタグで出ます。
+- Google Play で公開したら、落ちたときの例外と ANR (応答なし) は、Play Console の「Android Vitals」に集まります (アプリのコードは要りません。利用者が、使用状況と診断情報の送信を許可している端末から、集まります)。リリース版で R8 の難読化を有効にしたら、Play Console に、対応表 (`mapping.txt`) を上げると、例外の場所が読めます。
+
 ## 4. AWS の設定 (これから)
 
 接続先は `local.properties` (コミットしない) か、Gradle のプロパティで渡します。

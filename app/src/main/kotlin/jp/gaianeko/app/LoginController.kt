@@ -14,6 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** ログのタグ. */
+private const val TAG = "Login"
+
 /**
  * ログインの流れ (ログインの画面を出して, 登録, 確認, ログインを実行する).
  *
@@ -60,7 +63,11 @@ class LoginController(
         login.setBusy(true)
         scope.launch {
             runCatching { withContext(Dispatchers.IO) { action() } }
-                .onFailure { login.showMessage(activity.getString(R.string.error, it.message)) }
+                .onFailure {
+                    // メールアドレスとパスワードは, 書かない (例外の種類と, メッセージだけ)
+                    AppLog.w(TAG, "The request to the user pool failed", it)
+                    login.showMessage(activity.getString(R.string.error, it.message))
+                }
             login.setBusy(false)
         }
     }

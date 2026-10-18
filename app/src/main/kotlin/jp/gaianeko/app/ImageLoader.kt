@@ -15,6 +15,9 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.Executors
 
+/** ログのタグ. */
+private const val TAG = "Images"
+
 /** 写真を保存するフォルダ (キャッシュのフォルダの中) の名前. */
 internal const val ADOPTION_IMAGES_DIR = "adoption-images"
 
@@ -96,13 +99,15 @@ class ImageLoader(
      * @param url 画像の URL
      * @return 画像. 取得できなければ, null (エラーは, 画面に出さない. 代わりの絵のままにする)
      */
-    @Suppress("SwallowedException")
     private fun download(url: String): Bitmap? =
         try {
             val bytes = fetchBytes(url)
             file(url).writeBytes(bytes)
+            AppLog.d(TAG) { "Downloaded a photo (${bytes.size} bytes): $url" }
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
         } catch (e: IOException) {
+            // 通信できないと, 写真の数だけ出るので, デバッグ版だけ
+            AppLog.d(TAG) { "Could not download a photo: $url ($e)" }
             null
         }
 

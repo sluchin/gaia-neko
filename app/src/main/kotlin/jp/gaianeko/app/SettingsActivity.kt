@@ -19,6 +19,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** ログのタグ. */
+private const val TAG = "Settings"
+
 /** 要素と要素の間の余白 (dp). */
 private const val GAP_DP = 12
 
@@ -100,6 +103,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun showSize() {
         scope.launch {
             val bytes = withContext(Dispatchers.IO) { SavedData.size(this@SettingsActivity) }
+            AppLog.d(TAG) { "Saved data: $bytes bytes" }
             size.text =
                 getString(
                     R.string.settings_saved_size,
@@ -115,6 +119,7 @@ class SettingsActivity : AppCompatActivity() {
             .setPositiveButton(R.string.delete) { _, _ ->
                 scope.launch {
                     withContext(Dispatchers.IO) { SavedData.clear(this@SettingsActivity) }
+                    AppLog.i(TAG, "Deleted the saved data")
                     setResult(RESULT_OK)
                     message.showOrHide(getString(R.string.settings_cleared))
                     showSize()

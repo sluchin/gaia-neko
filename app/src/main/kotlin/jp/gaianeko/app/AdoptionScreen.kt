@@ -28,6 +28,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
+/** ログのタグ. */
+private const val TAG = "Adoption"
+
 /** 要素と要素の間の余白 (dp). */
 private const val GAP_DP = 12
 
@@ -39,7 +42,9 @@ private const val GAP_DP = 12
  */
 private suspend fun fetchPage(url: String): AdoptionPage =
     withContext(Dispatchers.IO) {
-        parseAdoptionPage(String(fetchBytes(url), Charsets.UTF_8), url)
+        parseAdoptionPage(String(fetchBytes(url), Charsets.UTF_8), url).also {
+            AppLog.d(TAG) { "Fetched $url: ${it.cats.size} cats, total ${it.total}" }
+        }
     }
 
 /**
@@ -159,6 +164,7 @@ class AdoptionScreen(
             loaded = true
             start {
                 val saved = withContext(Dispatchers.IO) { store.read() }
+                AppLog.d(TAG) { "Saved cats: ${saved?.size}" }
                 if (saved == null) {
                     loadAll()
                 } else {
@@ -185,6 +191,7 @@ class AdoptionScreen(
                     .onFailure {
                         // 止めたときは, ここで終える ([forget] が, 画面を片付けている)
                         if (it is CancellationException) throw it
+                        AppLog.w(TAG, "Could not fetch the adoption list", it)
                         message.showOrHide(context.getString(R.string.error, it.message))
                     }
                 busy.isVisible = false
@@ -218,6 +225,7 @@ class AdoptionScreen(
         busy.isIndeterminate = true
         busy.isVisible = true
         replace(emptyList())
+        AppLog.i(TAG, "Fetching all the pages of the adoption list")
         var url: String? = ADOPTION_URL
         while (url != null) {
             val page = fetchPage(url)
@@ -227,6 +235,7 @@ class AdoptionScreen(
         if (cats.isEmpty()) {
             message.showOrHide(context.getString(R.string.adoption_empty))
         }
+        AppLog.i(TAG, "Fetched ${cats.size} cats")
         save()
     }
 
@@ -248,6 +257,7 @@ class AdoptionScreen(
             added += fresh
             url = page.nextUrl.takeIf { fresh.isNotEmpty() }
         }
+        AppLog.i(TAG, "Found ${added.size} new cats")
         if (added.isEmpty()) {
             if (manual) {
                 message.showOrHide(context.getString(R.string.adoption_no_new))
