@@ -23,6 +23,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
+        android:supportsRtl="true"
         android:theme="@style/Theme.GaiaNeko">
         <activity
             android:name=".MainActivity"
@@ -32,6 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- 設定 (ドロワーから開く. 保存したデータの削除) -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings"
+            android:parentActivityName=".MainActivity" />
 
         <!-- カメラが, 撮影した写真を書き込む場所を渡すため -->
         <provider

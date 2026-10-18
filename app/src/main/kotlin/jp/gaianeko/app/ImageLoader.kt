@@ -15,6 +15,9 @@ import java.io.File
 import java.io.IOException
 import java.util.concurrent.Executors
 
+/** 写真を保存するフォルダ (キャッシュのフォルダの中) の名前. */
+internal const val ADOPTION_IMAGES_DIR = "adoption-images"
+
 /** 同時に取得する画像の数 (サイトに負荷をかけない). */
 private const val THREADS = 2
 
@@ -32,7 +35,7 @@ private const val MEMORY_FRACTION = 8
 class ImageLoader(
     context: Context,
 ) {
-    private val dir = File(context.cacheDir, "adoption-images").apply { mkdirs() }
+    private val dir = File(context.cacheDir, ADOPTION_IMAGES_DIR).apply { mkdirs() }
     private val executor = Executors.newFixedThreadPool(THREADS)
     private val memory =
         object : LruCache<String, Bitmap>(
@@ -69,6 +72,9 @@ class ImageLoader(
             }
         }
     }
+
+    /** メモリに残した画像を, 捨てる (設定で, 保存したデータを削除したとき). */
+    fun clearMemory() = memory.evictAll()
 
     /** 取得を止める (画面を閉じるとき). */
     fun shutdown() = executor.shutdown()

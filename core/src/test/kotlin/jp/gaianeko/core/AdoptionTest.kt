@@ -227,23 +227,75 @@ class AdoptionTest {
         )
     }
 
+    /** 全ての猫の数を, ページの中のスクリプトから読み出す. */
+    @Test
+    fun parseAdoptionPageReadsTheTotal() {
+        val head = """<script>var f = {"props":{"default":{"found_posts":263}}};</script>"""
+
+        assertEquals(263, parseAdoptionPage(pageOf(head, "", item())).total)
+    }
+
+    /** 全ての猫の数がない, または, 数が大きすぎるときは, null. */
+    @Test
+    fun parseAdoptionPageWithoutTotal() {
+        val huge = """<script>var f = {"found_posts":99999999999};</script>"""
+
+        assertEquals(
+            listOf(null, null),
+            listOf(pageOf("", ""), pageOf(huge, "")).map { parseAdoptionPage(it).total },
+        )
+    }
+
     /** 一覧が見つからなければ (サイトの作りが変わったら), 失敗する. */
     @Test
     fun parseAdoptionPageFailsWithoutList() {
         assertFailsWith<AdoptionParseException> { parseAdoptionPage("<html><body></body></html>") }
     }
 
+    /** 知っている猫にない猫だけを, ページの順に返す. */
+    @Test
+    fun newAdoptionCatsReturnsOnlyNewCats() {
+        val cat = AdoptionCat("タマ", null, null, null, "https://example.com/satooya/a/", null)
+        val b = cat.copy(url = "https://example.com/satooya/b/")
+        val c = cat.copy(url = "https://example.com/satooya/c/")
+
+        assertEquals(
+            listOf(b, c),
+            newAdoptionCats(listOf(cat), listOf(b, cat.copy(name = "ミケ"), c)),
+        )
+        assertEquals(emptyList(), newAdoptionCats(listOf(cat, b, c), listOf(c, b)))
+    }
+
+    /** 詳しいページの状態が「里親募集中」で始まれば, 募集している. */
+    @Test
+    fun isAdoptionOpenWhenRecruiting() {
+        val field = """<div class="jet-listing-dynamic-field__content">%s</div>"""
+
+        assertEquals(
+            listOf(true, true, false, false),
+            listOf(
+                field.format("里親募集中"),
+                field.format("メス") + field.format("里親募集中 テスト愛護センター"),
+                field.format("里親決定"),
+                "<p>里親募集中</p>",
+            ).map { isAdoptionOpen("<html><body>$it</body></html>") },
+        )
+    }
+
     /** ページのデータクラスの, 文字列, 複製, 分解が, 使える. */
     @Test
     fun pageDataClassFeatures() {
-        val page = AdoptionPage(emptyList(), "https://example.com/")
+        val page = AdoptionPage(emptyList(), "https://example.com/", 1)
 
         assertEquals(page, page.copy())
         assertEquals(page.hashCode(), page.copy().hashCode())
-        assertEquals("AdoptionPage(cats=[], nextUrl=https://example.com/)", page.toString())
         assertEquals(
-            listOf(emptyList<AdoptionCat>(), "https://example.com/"),
-            listOf(page.component1(), page.component2()),
+            "AdoptionPage(cats=[], nextUrl=https://example.com/, total=1)",
+            page.toString(),
+        )
+        assertEquals(
+            listOf(emptyList<AdoptionCat>(), "https://example.com/", 1),
+            listOf(page.component1(), page.component2(), page.component3()),
         )
     }
 

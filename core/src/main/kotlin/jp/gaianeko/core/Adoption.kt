@@ -15,6 +15,12 @@ const val ADOPTION_URL = "https://nyantomo.jp/satooya/"
 /** 2 ページ目からの, ページの番号を付ける問い合わせ (JetSmartFilters のページ送り. 後ろに番号を付ける). */
 private const val PAGE_QUERY = "?jsf=jet-engine&pagenum="
 
+/** 一覧の, 全ての猫の数 (JetSmartFilters が, ページの中のスクリプトに書く `found_posts`). */
+private val FOUND_POSTS = Regex(""""found_posts":(\d+)""")
+
+/** 里親を募集している猫の, 状態の文字 (この文字で始まれば, 募集している). */
+private const val STATUS_OPEN = "里親募集中"
+
 /** 一覧の項目の, 名前の見出し. */
 private const val LABEL_NAME = "名前"
 
@@ -50,10 +56,12 @@ data class AdoptionCat(
  *
  * @property cats 猫 (ページの順)
  * @property nextUrl 次のページの URL (最後のページなら, null)
+ * @property total 一覧の, 全てのページの猫の数 (分からなければ, null)
  */
 data class AdoptionPage(
     val cats: List<AdoptionCat>,
     val nextUrl: String?,
+    val total: Int?,
 )
 
 /**
@@ -71,11 +79,12 @@ class AdoptionParseException(
  * ページは, WordPress (Elementor と JetEngine) の一覧. 1 匹ごとの項目に, 写真, 詳細のページへのリンク,
  * 「名前」「年齢」「性別」の見出しと, その次の値, 状態がある. 名前か, リンクのない項目は, 飛ばす.
  * 一覧の部品の `data-page` と `data-pages` が, 今のページと, ページの数. 次のページは, 一覧の固定ページ
- * (`canonical` のリンク. なければ, [baseUrl]) に, ページの番号の問い合わせを付けた URL.
+ * (`canonical` のリンク. なければ, [baseUrl]) に, ページの番号の問い合わせを付けた URL. 全ての猫の数は,
+ * ページの中のスクリプトの `"found_posts":263` のような値.
  *
  * @param html 一覧のページの HTML
  * @param baseUrl 相対の URL を解決する, ページの URL
- * @return 猫と, 次のページの URL
+ * @return 猫, 次のページの URL, 全ての猫の数
  * @throws AdoptionParseException 一覧が見つからないとき (サイトの作りが, 変わったとき)
  */
 fun parseAdoptionPage(
@@ -94,18 +103,44 @@ fun parseAdoptionPage(
             ?.absUrl("href")
             .orEmpty()
             .ifEmpty { baseUrl }
+    val nextUrl = "${listUrl.substringBefore('?')}$PAGE_QUERY${page + 1}"
     return AdoptionPage(
         cats = document.select(".jet-listing-grid__item").mapNotNull { parseItem(it) },
-        nextUrl =
-            if (page <
-                pages
-            ) {
-                "${listUrl.substringBefore('?')}$PAGE_QUERY${page + 1}"
-            } else {
-                null
-            },
+        nextUrl = nextUrl.takeIf { page < pages },
+        total = FOUND_POSTS.find(html)?.let { it.groupValues[1].toIntOrNull() },
     )
 }
+
+/**
+ * 1 ページの猫のうち, 知っている猫 (保存した一覧) にない, 新しい猫を返す (詳しいページの URL で比べる).
+ *
+ * @param known 知っている猫
+ * @param page 1 ページの猫
+ * @return 新しい猫 (ページの順)
+ */
+fun newAdoptionCats(
+    known: List<AdoptionCat>,
+    page: List<AdoptionCat>,
+): List<AdoptionCat> {
+    val urls = known.mapTo(HashSet()) { it.url }
+    return page.filter { it.url !in urls }
+}
+
+/**
+ * 猫の詳しいページ (HTML) から, まだ里親を募集しているかを返す.
+ *
+ * 詳しいページは, 状態を, JetEngine の項目 (`.jet-listing-dynamic-field__content`) に書く. その中に,
+ * 「里親募集中」で始まる項目があれば, 募集している (「里親募集中 函館市愛護センター」のように, 後ろに,
+ * 場所が付くことがある).
+ *
+ * @param html 詳しいページの HTML
+ * @return 募集していれば, true
+ */
+fun isAdoptionOpen(html: String): Boolean =
+    Jsoup
+        .parse(html)
+        .select(".jet-listing-dynamic-field__content")
+        .any { it.text().startsWith(STATUS_OPEN) }
 
 /**
  * 一覧の 1 つの項目を, 読み出す.

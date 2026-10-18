@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:tint="?attr/colorControlNormal"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 設定: 歯車 (輪と, 8 つの歯と, 中の穴) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:pathData="M12,5.5a6.5,6.5 0 1,0 0.001,0zM12,9a3,3 0 1,0 0.001,0z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M12,2.5v2.5M12,19v2.5M2.5,12h2.5M19,12h2.5M5.3,5.3l1.8,1.8M16.9,16.9l1.8,1.8M5.3,18.7l1.8,-1.8M16.9,7.1l1.8,-1.8" />
+</vector>

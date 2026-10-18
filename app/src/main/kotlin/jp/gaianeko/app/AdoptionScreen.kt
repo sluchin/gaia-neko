@@ -7,95 +7,121 @@
 package jp.gaianeko.app
 
 import android.content.Context
-import android.content.Intent
 import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.AbsListView
-import android.widget.ArrayAdapter
-import android.widget.GridView
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.core.net.toUri
 import androidx.core.view.isVisible
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import jp.gaianeko.core.ADOPTION_URL
 import jp.gaianeko.core.AdoptionCat
 import jp.gaianeko.core.AdoptionPage
+import jp.gaianeko.core.newAdoptionCats
 import jp.gaianeko.core.parseAdoptionPage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-
-/** 一覧の列の数. */
-private const val COLUMNS = 2
+import kotlin.coroutines.resume
 
 /** 要素と要素の間の余白 (dp). */
 private const val GAP_DP = 12
 
-/** カードとカードの間の余白 (dp). */
-private const val CARD_GAP_DP = 8
-
-/** 一覧の終わりから, この行数の手前まで見えたら, 次のページを取得する. */
-private const val PREFETCH_ROWS = 2
+/**
+ * 1 ページを, サイトから取得する.
+ *
+ * @param url ページの URL
+ * @return ページ
+ */
+private suspend fun fetchPage(url: String): AdoptionPage =
+    withContext(Dispatchers.IO) {
+        parseAdoptionPage(String(fetchBytes(url), Charsets.UTF_8), url)
+    }
 
 /**
  * 里親募集の画面 (ニャン友ねっとわーく北海道の, 里親募集の一覧を, カードで並べる).
  *
- * 一覧は, 開いたときに, 最初のページを, サイトから取得する ([PageCache] で, 端末に残して, しばらくは
- * 取得し直さない). 一覧の終わりの近くまでスクロールしたら, 次のページを取得して, 後ろに足す
- * (全てのページを, 一度には取得しない). 再読み込みのボタンでは, 残したページを使わずに, 取得し直す.
+ * 一覧は, [CatStore] で, アプリに保存する. 起動してから初めて開いたときは, 保存した一覧をすぐに表示して,
+ * 裏で, サイトの最初のページから, 新しい猫 (保存した一覧にない猫) を探して, 一覧の先頭に足す. サイトは,
+ * 新しい猫が先頭に来るので, 新しい猫のいないページまで来たら, 止める (普段は, 1 ページだけ取得する).
+ * 更新 (上の更新のボタンか, 一覧を引き下げる) も, 新しい猫を探して, 先頭に足す. 保存した一覧がないときは, 最初のページから
+ * 最後のページまで, 1 ページずつ順に取得して, 一覧を作る (取得している間も, 一覧を見られる).
  * 写真は, [ImageLoader] で, サイトから取得する. カードを押すと, サイトの詳しいページを, ブラウザで開く.
+ * 仕様の全体は, `ADOPTION.md`.
  *
  * @property context コンテキスト (画面)
  * @property scope コルーチンのスコープ (画面のスレッドで動く)
- * @property images 写真の読み込み
+ * @param images 写真の読み込み
+ * @param favorites お気に入り (カードの, ハートのボタン)
  */
 class AdoptionScreen(
     private val context: Context,
     private val scope: CoroutineScope,
-    private val images: ImageLoader,
+    images: ImageLoader,
+    favorites: Favorites,
 ) {
     private val count =
         context.styledText(
             com.google.android.material.R.style.TextAppearance_Material3_LabelLarge,
             com.google.android.material.R.attr.colorOnSurfaceVariant,
         )
-    private val reload =
-        context.materialButton(
-            R.string.reload,
-            androidx.appcompat.R.attr.borderlessButtonStyle,
-        ) { load(useCache = false) }
+
+    /**
+     * 更新 (更新のボタンと, 引き下げ). 一覧があれば, 新しい猫を探して, 先頭に足す (探している間は, 引き下げの
+     * 丸を回す. いなければ, そう表示する). 一覧がなければ (最初の取得に失敗したとき), 全てのページを取得する
+     * (進み具合のバーを出す). 取得している間は, 何もしない.
+     */
+    private val refresh: () -> Unit = {
+        if (job?.isActive == true) {
+            swipe.isRefreshing = false
+        } else {
+            start {
+                if (cats.isEmpty()) {
+                    swipe.isRefreshing = false
+                    loadAll()
+                } else {
+                    swipe.isRefreshing = true
+                    addNew(manual = true)
+                }
+            }
+        }
+    }
+    private val refreshButton =
+        MaterialButton(
+            context,
+            null,
+            com.google.android.material.R.attr.materialIconButtonStyle,
+        ).apply {
+            setIconResource(R.drawable.ic_refresh)
+            contentDescription = context.getString(R.string.refresh)
+            tooltipText = contentDescription
+            setOnClickListener { refresh() }
+        }
     private val busy = context.busyIndicator()
     private val message = context.cardText()
-    private val pages = PageCache(context)
+    private val store = CatStore(context)
     private val cats = mutableListOf<AdoptionCat>()
-    private val adapter = CatAdapter(cats)
-    private val grid =
-        GridView(context).apply {
-            numColumns = COLUMNS
-            stretchMode = GridView.STRETCH_COLUMN_WIDTH
-            horizontalSpacing = context.dp(CARD_GAP_DP)
-            verticalSpacing = context.dp(CARD_GAP_DP)
-            clipToPadding = false
-            adapter = this@AdoptionScreen.adapter
-            setOnItemClickListener { _, _, position, _ ->
-                context.startActivity(Intent(Intent.ACTION_VIEW, cats[position].url.toUri()))
-            }
-            setOnScrollListener(NearEnd())
+    private val grid = context.catGrid(cats, images, favorites)
+    private val adapter = grid.second
+    private val swipe =
+        SwipeRefreshLayout(context).apply {
+            addView(grid.first)
+            setColorSchemeColors(
+                MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary),
+            )
+            setOnRefreshListener { refresh() }
         }
     private var loaded = false
 
-    /** 次のページの URL (最後のページまで取得したか, 取得に失敗したら, null). */
-    private var nextUrl: String? = null
+    /** 取得している処理 (なければ, null). */
+    private var job: Job? = null
 
-    /** ページを取得している間は, true. */
-    private var loading = false
-
-    /** 端末に残したページを使うか (再読み込みのあとは, 次のページも, 取得し直す). */
-    private var useCache = true
+    /** 一覧の, 全ての猫の数 (最初のページで分かる. 分からなければ, null). */
+    private var total: Int? = null
 
     /** 画面をまとめた View. */
     val view =
@@ -112,56 +138,173 @@ class AdoptionScreen(
             )
             addSpaced(message, GAP_DP)
             addView(
-                grid,
+                swipe,
                 LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f).apply {
                     topMargin = context.dp(GAP_DP)
                 },
             )
         }
 
-    /** 初めて表示するときだけ, 一覧を取得する (2 回目からは, 再読み込みのボタンで). */
+    init {
+        // お気に入りが変わったら, ハートを描き直す
+        favorites.addListener { adapter.notifyDataSetChanged() }
+    }
+
+    /**
+     * 起動してから初めて表示するときだけ, 一覧を表示する (保存した一覧があれば, それと, サイトの
+     * 新しい猫. なければ, サイトの全てのページ). 2 回目からと, 失敗したときは, 更新で.
+     */
     fun loadOnce() {
         if (!loaded) {
-            load(useCache = true)
-        }
-    }
-
-    /**
-     * 一覧を, 最初のページから取得し直す.
-     *
-     * @param useCache 端末に残したページを使うか
-     */
-    private fun load(useCache: Boolean) {
-        this.useCache = useCache
-        cats.clear()
-        adapter.notifyDataSetChanged()
-        fetch(ADOPTION_URL)
-    }
-
-    /**
-     * 1 ページを, サイトから取得して, 一覧の後ろに足す (失敗したら, メッセージを表示する).
-     *
-     * @param url ページの URL
-     */
-    private fun fetch(url: String) {
-        loading = true
-        nextUrl = null
-        busy.isVisible = true
-        reload.isEnabled = false
-        message.showOrHide("")
-        scope.launch {
-            runCatching {
-                withContext(Dispatchers.IO) {
-                    parseAdoptionPage(pages.get(url, useCache), url)
+            loaded = true
+            start {
+                val saved = withContext(Dispatchers.IO) { store.read() }
+                if (saved == null) {
+                    loadAll()
+                } else {
+                    replace(saved)
+                    addNew(manual = false)
                 }
-            }.onSuccess {
-                loaded = true
-                show(it)
-            }.onFailure { message.showOrHide(context.getString(R.string.error, it.message)) }
-            loading = false
-            busy.isVisible = false
-            reload.isEnabled = true
+            }
         }
+    }
+
+    /**
+     * 取得を始める (取得している間は, 更新のボタンを押せなくする. 失敗したら, メッセージを表示する.
+     * バーは, 全てのページを取得するときだけ, [loadAll] が表示する. 新しい猫を探す間は, 保存した一覧を
+     * 表示しているので, 表示しない).
+     *
+     * @param work 取得する処理
+     */
+    private fun start(work: suspend () -> Unit) {
+        refreshButton.isEnabled = false
+        message.showOrHide("")
+        job =
+            scope.launch {
+                runCatching { work() }
+                    .onFailure {
+                        // 止めたときは, ここで終える ([forget] が, 画面を片付けている)
+                        if (it is CancellationException) throw it
+                        message.showOrHide(context.getString(R.string.error, it.message))
+                    }
+                busy.isVisible = false
+                swipe.isRefreshing = false
+                refreshButton.isEnabled = true
+                showCount(done = true)
+            }
+    }
+
+    /**
+     * 一覧を捨てる (設定で, 保存したデータを削除したとき. 取得している処理は, 止める. 里親募集のタブを
+     * 表示していれば, すぐに, そうでなければ, 次に開いたときに, サイトから, 全てのページを取得する).
+     */
+    fun forget() {
+        job?.cancel()
+        loaded = false
+        replace(emptyList())
+        count.text = ""
+        message.showOrHide("")
+        // 里親募集のタブを表示していれば, すぐに取得し直す
+        if (view.isVisible) {
+            loadOnce()
+        }
+    }
+
+    /**
+     * 一覧を, 最初のページから最後のページまで, 1 ページずつ順に取得して, 作る (取得し終えたら,
+     * 保存する. 途中で失敗したら, 保存した一覧は, 前のまま).
+     */
+    private suspend fun loadAll() {
+        busy.isIndeterminate = true
+        busy.isVisible = true
+        replace(emptyList())
+        var url: String? = ADOPTION_URL
+        while (url != null) {
+            val page = fetchPage(url)
+            append(page)
+            url = page.nextUrl
+        }
+        if (cats.isEmpty()) {
+            message.showOrHide(context.getString(R.string.adoption_empty))
+        }
+        save()
+    }
+
+    /**
+     * サイトの最初のページから, 新しい猫を探して, 一覧の先頭に足す (新しい猫のいないページで止める.
+     * 足したら, 保存して, 何匹足したかを表示する).
+     *
+     * 起動後の最初の表示では, 足す前に, ダイアログで聞く (「あとで」なら, 足さない. 次の更新で, また見つかる).
+     * 更新 (ボタンと, 引き下げ) では, 聞かずに足して, いなければ, そう表示する.
+     *
+     * @param manual 更新の操作からか (false なら, 起動後の最初の表示)
+     */
+    private suspend fun addNew(manual: Boolean) {
+        val added = mutableListOf<AdoptionCat>()
+        var url: String? = ADOPTION_URL
+        while (url != null) {
+            val page = fetchPage(url)
+            val fresh = newAdoptionCats(cats + added, page.cats)
+            added += fresh
+            url = page.nextUrl.takeIf { fresh.isNotEmpty() }
+        }
+        if (added.isEmpty()) {
+            if (manual) {
+                message.showOrHide(context.getString(R.string.adoption_no_new))
+            }
+            return
+        }
+        val accepted =
+            manual ||
+                suspendCancellableCoroutine { continuation ->
+                    val dialog =
+                        MaterialAlertDialogBuilder(context)
+                            .setMessage(
+                                context.resources.getQuantityString(
+                                    R.plurals.adoption_new_found,
+                                    added.size,
+                                    added.size,
+                                ),
+                            ).setPositiveButton(R.string.adoption_add) { _, _ ->
+                                continuation.resume(true)
+                            }.setNegativeButton(R.string.adoption_later) { _, _ ->
+                                continuation.resume(false)
+                            }.setOnCancelListener { continuation.resume(false) }
+                            .show()
+                    continuation.invokeOnCancellation { dialog.dismiss() }
+                }
+        if (accepted) {
+            // 聞いている間に, 一覧が変わっていてもよいように, もう一度, 比べる
+            val fresh = newAdoptionCats(cats, added)
+            replace(fresh + cats)
+            save()
+            message.showOrHide(
+                context.resources.getQuantityString(
+                    R.plurals.adoption_added,
+                    fresh.size,
+                    fresh.size,
+                ),
+            )
+        }
+    }
+
+    /** 今の一覧を, 保存する. */
+    private suspend fun save() {
+        val snapshot = cats.toList()
+        withContext(Dispatchers.IO) { store.write(snapshot) }
+    }
+
+    /**
+     * 一覧を, 置き換える (保存した一覧を表示するとき, 作り直すとき).
+     *
+     * @param list 猫
+     */
+    private fun replace(list: List<AdoptionCat>) {
+        cats.clear()
+        cats += list
+        total = null
+        adapter.notifyDataSetChanged()
+        showCount(done = false)
     }
 
     /**
@@ -169,20 +312,36 @@ class AdoptionScreen(
      *
      * @param page ページ
      */
-    private fun show(page: AdoptionPage) {
-        val known = cats.map { it.url }.toSet()
-        cats += page.cats.filter { it.url !in known }
-        nextUrl = page.nextUrl
+    private fun append(page: AdoptionPage) {
+        cats += newAdoptionCats(cats, page.cats)
+        total = total ?: page.total
         adapter.notifyDataSetChanged()
+        showCount(done = false)
+    }
+
+    /**
+     * 匹数と, 進み具合を表示する (取得している間は「読み込んだ数 / 全ての数」と, その割合のバー).
+     *
+     * @param done 全てのページを取得し終えたか (失敗して, 止まったときも)
+     */
+    private fun showCount(done: Boolean) {
+        val all = total
+        val size = cats.size
         count.text =
-            context.resources.getQuantityString(R.plurals.adoption_count, cats.size, cats.size)
-        if (cats.isEmpty()) {
-            message.showOrHide(context.getString(R.string.adoption_empty))
+            if (done || all == null) {
+                context.resources.getQuantityString(R.plurals.adoption_count, size, size)
+            } else {
+                context.resources.getQuantityString(R.plurals.adoption_progress, all, size, all)
+            }
+        if (!done && all != null && all > 0) {
+            busy.isIndeterminate = false
+            busy.max = all
+            busy.setProgressCompat(size.coerceAtMost(all), true)
         }
     }
 
     /**
-     * 見出し (題名, 匹数, 再読み込みのボタン) を作る.
+     * 見出し (題名, 匹数, 更新のボタン) を作る.
      *
      * @return 見出し
      */
@@ -198,77 +357,6 @@ class AdoptionScreen(
                 LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
             )
             addView(count)
-            addView(reload)
+            addView(refreshButton)
         }
-
-    /** 一覧の終わりの近くが見えたら, 次のページを取得する (取得している間と, 最後のページでは, しない). */
-    private inner class NearEnd : AbsListView.OnScrollListener {
-        /**
-         * スクロールの状態が変わったとき (使わない).
-         *
-         * @param view 一覧
-         * @param scrollState スクロールの状態
-         */
-        override fun onScrollStateChanged(
-            view: AbsListView,
-            scrollState: Int,
-        ) = Unit
-
-        /**
-         * スクロールしたとき, または, 一覧の中身が変わったとき.
-         *
-         * @param view 一覧
-         * @param firstVisibleItem 見えている, 最初のカード
-         * @param visibleItemCount 見えている, カードの数
-         * @param totalItemCount カードの数
-         */
-        override fun onScroll(
-            view: AbsListView,
-            firstVisibleItem: Int,
-            visibleItemCount: Int,
-            totalItemCount: Int,
-        ) {
-            val next = nextUrl
-            val nearEnd =
-                firstVisibleItem + visibleItemCount >= totalItemCount - COLUMNS * PREFETCH_ROWS
-            if (next != null && !loading && nearEnd) {
-                fetch(next)
-            }
-        }
-    }
-
-    /**
-     * 猫のカードを並べる, 一覧のアダプタ.
-     *
-     * @param cats 猫
-     */
-    private inner class CatAdapter(
-        private val cats: List<AdoptionCat>,
-    ) : ArrayAdapter<AdoptionCat>(context, R.layout.item_adoption, cats) {
-        /**
-         * 1 枚のカードを作る (使い回せるカードがあれば, 使い回す).
-         *
-         * @param position 何番目か
-         * @param convertView 使い回せるカード
-         * @param parent 一覧
-         * @return カード
-         */
-        override fun getView(
-            position: Int,
-            convertView: View?,
-            parent: ViewGroup,
-        ): View {
-            val card =
-                convertView
-                    ?: LayoutInflater.from(context).inflate(R.layout.item_adoption, parent, false)
-            val cat = cats[position]
-            card.findViewById<TextView>(R.id.name).text = cat.name
-            card.findViewById<TextView>(R.id.details).showOrHide(
-                listOfNotNull(cat.age, cat.sex).joinToString(" · "),
-            )
-            card.findViewById<TextView>(R.id.status).showOrHide(cat.status.orEmpty())
-            images.load(card.findViewById<ImageView>(R.id.photo), cat.imageUrl)
-            return card
-        }
-    }
 }

@@ -21,46 +21,56 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 private const val CONTENT_PADDING_DP = 16
 
 /**
- * ログインしたあとの画面の, 下のタブ (撮影と, 里親募集).
+ * ログインしたあとの画面の, 下のタブ (猫情報提供 (撮影) と, 里親募集と, お気に入り).
  *
- * 撮影のタブは, スクロールする. 里親募集のタブは, 一覧が自分でスクロールするので, そのまま置く.
- * 里親募集の一覧は, 初めてタブを開いたときに, 取得する.
+ * 猫情報提供のタブは, スクロールする. 里親募集とお気に入りのタブは, 一覧が自分でスクロールするので,
+ * そのまま置く. 里親募集の一覧は, 初めてタブを開いたときに, 取得する. お気に入りは, 初めてタブを開いたときに,
+ * 募集が終わったかを, サイトで確かめる.
  *
  * @param context コンテキスト
- * @param home 撮影のタブの中身
+ * @param home 猫情報提供 (撮影) のタブの中身
  * @param adoption 里親募集の画面 (画面を作り直しても, 取得した一覧を使い回す)
+ * @param favorites お気に入り (タブを開いたときに, 募集が終わったかを確かめる)
+ * @param favoritesView お気に入りの画面 (画面を作り直しても, 使い回す)
  */
 class HomeTabs(
     context: Context,
     home: View,
     adoption: AdoptionScreen,
+    favorites: Favorites,
+    favoritesView: View,
 ) {
-    private val homeTab = ScrollView(context).apply { addView(home) }
-    private val adoptionTab = adoption.view
+    /** タブごとの中身 (下のタブの項目の ID から). */
+    private val tabs =
+        mapOf(
+            R.id.nav_capture to ScrollView(context).apply { addView(home) },
+            R.id.nav_adoption to adoption.view,
+            R.id.nav_favorites to favoritesView,
+        )
 
     /** 画面をまとめた View. */
     val view: LinearLayout
 
     init {
-        // 前の画面 (地図から戻る前) に付いていれば, 外す
-        (adoptionTab.parent as? ViewGroup)?.removeView(adoptionTab)
-        adoptionTab.isVisible = false
         val padding = context.dp(CONTENT_PADDING_DP)
         val content =
             FrameLayout(context).apply {
                 setPadding(padding, padding, padding, 0)
-                addView(homeTab)
-                addView(adoptionTab)
+                tabs.forEach { (id, tab) ->
+                    // 前の画面 (地図から戻る前) に付いていれば, 外す
+                    (tab.parent as? ViewGroup)?.removeView(tab)
+                    tab.isVisible = id == R.id.nav_capture
+                    addView(tab)
+                }
             }
         val nav =
             BottomNavigationView(context).apply {
                 inflateMenu(R.menu.bottom_nav)
-                setOnItemSelectedListener {
-                    val showAdoption = it.itemId == R.id.nav_adoption
-                    homeTab.isVisible = !showAdoption
-                    adoptionTab.isVisible = showAdoption
-                    if (showAdoption) {
-                        adoption.loadOnce()
+                setOnItemSelectedListener { item ->
+                    tabs.forEach { (id, tab) -> tab.isVisible = id == item.itemId }
+                    when (item.itemId) {
+                        R.id.nav_adoption -> adoption.loadOnce()
+                        R.id.nav_favorites -> favorites.checkOnce()
                     }
                     true
                 }

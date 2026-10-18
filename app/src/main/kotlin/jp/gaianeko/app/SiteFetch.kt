@@ -18,11 +18,20 @@ private const val TIMEOUT_MS = 15_000
 private const val USER_AGENT = "gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)"
 
 /**
+ * サイトが, 200 以外の応答を返したとき.
+ *
+ * @property code 応答の番号 (404 など)
+ */
+class HttpStatusException(
+    val code: Int,
+) : IOException("HTTP $code")
+
+/**
  * サイトから, URL の中身を取得する (IO のスレッドで呼ぶ. 同じサイトの中の転送には, ついていく).
  *
  * @param url 取得する URL
  * @return 中身
- * @throws IOException 取得できないとき (通信の失敗, 200 以外の応答)
+ * @throws IOException 取得できないとき (通信の失敗. 200 以外の応答は, [HttpStatusException])
  */
 fun fetchBytes(url: String): ByteArray {
     val connection = URL(url).openConnection() as HttpURLConnection
@@ -32,7 +41,7 @@ fun fetchBytes(url: String): ByteArray {
     return try {
         val code = connection.responseCode
         if (code != HttpURLConnection.HTTP_OK) {
-            throw IOException("HTTP $code")
+            throw HttpStatusException(code)
         }
         connection.inputStream.use { it.readBytes() }
     } finally {

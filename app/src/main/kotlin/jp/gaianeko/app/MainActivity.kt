@@ -8,6 +8,7 @@ package jp.gaianeko.app
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
@@ -19,11 +20,15 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** 設定の画面を開く要求の番号 (撮影の流れの番号と, 重ならないように). */
+private const val REQUEST_SETTINGS = 10
+
 /**
  * 最初の画面 (ログインの状態で, 画面を切り替える).
  *
  * AWS の設定がなければ, その旨を表示する. 保存した更新トークンがあれば, ログインの画面を飛ばす.
- * ログインしたあとは, 下のタブで, 撮影と里親募集の画面を切り替える. 管理者には, 地図の画面へのボタンも出る.
+ * ログインしたあとは, 下のタブで, 猫情報提供 (撮影) と, 里親募集と, お気に入りの画面を切り替える. 管理者には, 地図の画面へのボタンも出る.
+ * 左から引き出すメニュー ([HomeDrawer]) から, 設定の画面 ([SettingsActivity]) を開く.
  */
 class MainActivity : AppCompatActivity() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -32,8 +37,11 @@ class MainActivity : AppCompatActivity() {
     private var login: LoginController? = null
     private var capture: CaptureController? = null
     private var map: AdminMapScreen? = null
+    private var drawer: HomeDrawer? = null
     private val images by lazy { ImageLoader(this) }
-    private val adoption by lazy { AdoptionScreen(this, scope, images) }
+    private val favorites by lazy { Favorites(this, scope) }
+    private val adoption by lazy { AdoptionScreen(this, scope, images, favorites) }
+    private val favoritesScreen by lazy { FavoritesScreen(this, images, favorites) }
 
     /**
      * 画面を作る.
@@ -72,6 +80,8 @@ class MainActivity : AppCompatActivity() {
      * @param content 表示する View
      */
     private fun showInRoot(content: View) {
+        drawer?.detach()
+        drawer = null
         if (root.parent == null) {
             setContentView(root)
         }
@@ -79,7 +89,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * ログインしたあとの画面を表示する (下のタブで, 撮影と, 里親募集. 管理者には, 地図のボタンも).
+     * ログインしたあとの画面を表示する (下のタブで, 猫情報提供 (撮影) と, 里親募集と, お気に入り. 管理者には, 地図のボタンも).
      *
      * @param session トークン
      */
@@ -107,7 +117,18 @@ class MainActivity : AppCompatActivity() {
                 },
             )
         capture = controller
-        setContentView(HomeTabs(this, screen.view, adoption).view)
+        drawer?.detach()
+        val home =
+            HomeDrawer(
+                this,
+                HomeTabs(this, screen.view, adoption, favorites, favoritesScreen.view).view,
+                session.isAdmin,
+            ) {
+                @Suppress("DEPRECATION")
+                startActivityForResult(Intent(this, SettingsActivity::class.java), REQUEST_SETTINGS)
+            }
+        drawer = home
+        setContentView(home.view)
     }
 
     /**
@@ -127,6 +148,8 @@ class MainActivity : AppCompatActivity() {
                 showHome(session)
             }
         map = screen
+        drawer?.detach()
+        drawer = null
         screen.view.applySystemBarInsets()
         setContentView(screen.view)
         screen.load()
@@ -149,11 +172,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * カメラの結果を, 撮影の流れに渡す.
+     * カメラの結果を, 撮影の流れに渡す (設定の画面から戻ったときは, 保存したデータを削除したかを見る).
      *
      * @param requestCode 要求の番号
      * @param resultCode 結果
-     * @param data カメラが返したデータ (使わない. 写真は, 渡したファイルに書かれる)
+     * @param data 返したデータ (使わない. 写真は, 渡したファイルに書かれる)
      */
     @Deprecated("The framework deprecated it, but the Activity API is enough for this screen")
     override fun onActivityResult(
@@ -163,8 +186,22 @@ class MainActivity : AppCompatActivity() {
     ) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_SETTINGS && resultCode == RESULT_OK) {
+            // 設定で, 保存したデータを削除した
+            adoption.forget()
+            images.clearMemory()
+        }
         capture?.onCameraResult(requestCode, resultCode)
     }
+
+    /**
+     * 上のバーのボタン (ドロワーを開け閉めする三本線) を処理する.
+     *
+     * @param item 押されたボタン
+     * @return 処理したら, true
+     */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        drawer?.onOptionsItemSelected(item) == true || super.onOptionsItemSelected(item)
 
     /** 画面が前面に出たとき (地図を再開する). */
     override fun onResume() {

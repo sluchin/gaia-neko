@@ -32,13 +32,40 @@
     <string name="role_user">利用者</string>
     <string name="role_admin">管理者</string>
     <string name="capture_note">写真と場所は、管理者だけが見られます。</string>
-    <string name="tab_capture">撮影</string>
+    <string name="tab_capture">猫情報提供</string>
     <string name="tab_adoption">里親募集</string>
     <string name="adoption_title">里親募集中の猫</string>
     <string name="adoption_source">ニャン友ねっとわーく北海道の里親募集より。猫をタップすると、サイトの詳しいページを開きます。</string>
     <plurals name="adoption_count">
         <item quantity="other">%1$d 匹</item>
     </plurals>
+    <plurals name="adoption_progress">
+        <item quantity="other">%1$d / %2$d 匹</item>
+    </plurals>
+    <plurals name="adoption_added">
+        <item quantity="other">新しい猫を %1$d 匹、先頭に追加しました。</item>
+    </plurals>
+    <string name="adoption_no_new">新しい猫はいませんでした。</string>
+    <plurals name="adoption_new_found">
+        <item quantity="other">新しく里親を募集している猫が %1$d 匹います。一覧に追加しますか？</item>
+    </plurals>
+    <string name="adoption_add">追加する</string>
+    <string name="adoption_later">あとで</string>
     <string name="adoption_empty">今、募集している猫はいません。</string>
-    <string name="reload">再読み込み</string>
+    <string name="refresh">更新</string>
+    <string name="drawer_open">メニューを開く</string>
+    <string name="drawer_close">メニューを閉じる</string>
+    <string name="settings">設定</string>
+    <string name="settings_saved_title">保存したデータ</string>
+    <string name="settings_saved_note">里親募集の一覧と写真を、端末に保存しています (すぐに表示できて、通信できないときも見られます)。</string>
+    <string name="settings_saved_size">使っている容量: %1$s</string>
+    <string name="settings_clear">保存したデータを削除</string>
+    <string name="settings_clear_confirm">保存した里親募集の一覧と写真を削除しますか？次に里親募集を開いたときに、サイトから全て取得し直します。</string>
+    <string name="settings_cleared">保存したデータを削除しました。</string>
+    <string name="tab_favorites">お気に入り</string>
+    <string name="favorites_title">お気に入りの猫</string>
+    <string name="favorites_empty">お気に入りの猫は、まだいません。里親募集の猫のハートを押すと、ここに並びます。</string>
+    <string name="favorite_add">お気に入りに追加</string>
+    <string name="favorite_remove">お気に入りから外す</string>
+    <string name="adopted">譲渡済み</string>
 </resources>

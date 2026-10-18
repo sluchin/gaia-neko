@@ -9,6 +9,8 @@ awsSdk = "1.9.17"
 androidxCore = "1.17.0"
 material = "1.14.0"
 appcompat = "1.7.1"
+drawerlayout = "1.2.0"
+swiperefreshlayout = "1.1.0"
 androidxExif = "1.4.1"
 osmdroid = "6.1.20"
 coroutines = "1.11.0"
@@ -30,6 +32,8 @@ osmdroid = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroid" 
 androidx-core = { module = "androidx.core:core", version.ref = "androidxCore" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
+androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version.ref = "swiperefreshlayout" }
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }

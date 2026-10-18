@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 里親募集の猫の, 1 枚のカード (写真, 状態の印, 名前, 年齢と性別) -->
+<!-- 里親募集の猫の, 1 枚のカード (写真, 状態の印, お気に入りのハート, 名前, 年齢と性別) -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     style="?attr/materialCardViewFilledStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -33,6 +34,20 @@
                 android:paddingTop="2dp"
                 android:textAppearance="?attr/textAppearanceLabelMedium"
                 android:textColor="?attr/colorOnTertiaryContainer" />
+
+            <!-- お気に入りのハート (一覧の, カードを押す操作を, 邪魔しないように, フォーカスを取らない) -->
+            <ImageButton
+                android:id="@+id/favorite"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="4dp"
+                android:background="@drawable/favorite_background"
+                android:contentDescription="@string/favorite_add"
+                android:focusable="false"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                app:tint="?attr/colorTertiary" />
         </FrameLayout>
 
         <TextView

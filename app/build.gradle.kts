@@ -92,6 +92,10 @@ dependencies {
     // Material 3 の部品とテーマ (Compose は使わない)
     implementation(libs.material)
     implementation(libs.androidx.appcompat)
+    // 左から引き出すメニュー (ナビゲーションドロワー)
+    implementation(libs.androidx.drawerlayout)
+    // 引き下げて更新する (里親募集の一覧)
+    implementation(libs.androidx.swiperefreshlayout)
     // 管理者の地図 (OpenStreetMap. API キーは, 要らない)
     implementation(libs.osmdroid)
     // 写真の Exif (GPS) を読む

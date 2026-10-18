@@ -8,4 +8,8 @@
         android:id="@+id/nav_adoption"
         android:icon="@drawable/ic_adoption"
         android:title="@string/tab_adoption" />
+    <item
+        android:id="@+id/nav_favorites"
+        android:icon="@drawable/ic_favorite_border"
+        android:title="@string/tab_favorites" />
 </menu>

@@ -51,7 +51,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 ## プロジェクト構成
 
-- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、里親募集の一覧のページの解析 (`parseAdoptionPage`。jsoup)、トークン (`Session`。管理者かの判定 `isAdmin` は画面の出し分けだけに使う)。AWS のクライアントは引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
+- `core/`: 純粋な Kotlin (Android に依存しない)。猫の目撃 (`Sighting`)、位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、ユーザープールの登録とログイン (`UserPoolAuth`)、ID プールの認証情報 (`CognitoLoginCredentials`)、ログインの状態と更新トークンの保存の入り口 (`SessionManager`、`RefreshTokenStore`)、目撃の保存 (`SightingUploader`) と読み出し (`SightingSource`、`PhotoSource`。管理者だけ)、地図の表示範囲 (`boundsOf`)、里親募集の一覧のページの解析 (`parseAdoptionPage`。jsoup) と、新しい猫の判定 (`newAdoptionCats`)、トークン (`Session`。管理者かの判定 `isAdmin` は画面の出し分けだけに使う)。AWS のクライアントは引数で渡して、テストでは、偽物にする。**単体テストで、行と分岐のカバレッジ 100%。**
 - `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは `SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`、`HomeScreen`、管理者の地図 `AdminMapScreen`)。画面は Material Components の View (Compose は使わない。部品を作る関数は `Views.kt`)。地図のピンには、同じ場所の写真の枚数を書く (`PinIcon.kt`)。ログインのあとは、下のタブ (`HomeTabs`) で、撮影と里親募集 (`AdoptionScreen`) を切り替える。地図は osmdroid (OpenStreetMap)。OpenStreetMap のタイルサーバーには利用ポリシーがある (大量のアクセスを避ける。`userAgentValue` を設定する) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは `core` に置く (UI は単体テストの対象外)。
 - `gradle/libs.versions.toml`: ライブラリとプラグインの版 (版カタログ)。版を変えるときはここだけ。
 - `config/detekt/detekt.yml`: detekt の規則 (既定に上書きするものだけ)。
@@ -64,14 +64,23 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 - **権限の方針 (最小権限)**: 認証した利用者のロールは S3 の写真の書き込み (`s3:PutObject`。自分の `photos/<自分の ID>/` だけ) と、DynamoDB の書き込み (`dynamodb:PutItem`) だけ。**読み取りの権限を付けない。** 管理者のグループのロールだけが、DynamoDB の `Query` / `Scan` / `DeleteItem` と、S3 の `GetObject` / `DeleteObject` を持つ (管理者は利用者のロールではなく、管理者のロールだけになるので、管理者のロールにも、利用者と同じ書き込み (自分の分だけ) を付ける)。S3 のバケットは公開しない (パブリックアクセスのブロック)。
 - **位置と写真をログや、エラーのメッセージに出さない。** テストや文書の例の位置は実在の場所を避けた、ダミーの値にする。
 
+## メニューと設定
+
+- ログインしたあとの画面は、`HomeDrawer` (DrawerLayout と NavigationView。`androidx.drawerlayout`) で包む。上のバーの三本線は `ActionBarDrawerToggle`。ログインや地図の画面に切り替えるときは、`detach()` で、三本線と、戻るの操作を外す。
+- 画面は、上のバーの下まで広がる (edge-to-edge) ので、ドロワーにも、中身 (`HomeTabs`) と同じく、システムバーの上の余白を空ける (空けないと、見出しが上のバーに隠れる)。
+- 設定は、別の画面 (`SettingsActivity`。上の矢印と、戻るで閉じる)。保存したデータ (`SavedData`。猫の一覧の JSON と、写真のファイル) の容量の表示と削除。削除したら `RESULT_OK` を返し、`MainActivity` が、里親募集の一覧 (`AdoptionScreen.forget()`) と、メモリの写真 (`ImageLoader.clearMemory()`) を捨てる。写真のフォルダは、消さずに、中のファイルだけを消す (`ImageLoader` が、そのフォルダに書き続けるため)。
+
 ## 里親募集 (ニャン友ねっとわーく北海道)
 
-- 里親募集のタブは、[ニャン友ねっとわーく北海道](https://nyantomo.jp/) の里親募集の一覧 (`https://nyantomo.jp/satooya/`。固定ページに転送される) を、タブを開いたときに取得して、カードで並べる。カードを押すと、サイトの詳しいページを、ブラウザで開く。
+- 里親募集のタブは、[ニャン友ねっとわーく北海道](https://nyantomo.jp/) の里親募集の一覧 (`https://nyantomo.jp/satooya/`。固定ページに転送される) を、カードで並べる。カードを押すと、サイトの詳しいページを、ブラウザで開く。
 - `robots.txt` は、全てを許可している (2026-10-17 に確認)。利用規約と、写真の転載の決まりは、サイトに書かれていない。
-- **サイトに負荷をかけない**: 一覧は、タブを初めて開いたときと、再読み込みのボタンのときだけ、最初のページを取得する。取得したページは、端末のキャッシュ (`adoption-pages`) に残し、6 時間は取得し直さない (`PageCache`。再読み込みのボタンでは、残したページを使わない。取得に失敗したら、古くても残したページを使う)。一覧は、1 ページに 15 匹で、18 ページほどある (2026-10-17)。次のページは、一覧の終わりの近くまでスクロールしたときに、1 ページずつ取得する (全てのページを、一度には取得しない。取得に失敗したら、再読み込みまで止める)。写真は、同時に 2 つまで取得して、端末のキャッシュに残す (`ImageLoader`)。名乗る User-Agent (`gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)`) を付ける (`SiteFetch.kt`)。
+- **仕様は `ADOPTION.md`** (取得のタイミング、保存、新しい猫の探し方、全てのページの取得、更新の操作、失敗、削除、まだ反映しないもの)。里親募集の動きを変えたら、`ADOPTION.md` も直す。
+- **サイトに負荷をかけない**: 取得するのは、起動してからタブを初めて開いたときと、更新 (更新のボタンと、引き下げ。`SwipeRefreshLayout`) と、設定で削除したあとだけ。普段は、新しい猫を探すだけ (1 ページ目から、新しい猫のいないページで止める。起動後の最初の表示では、足す前に、ダイアログで聞く)。全てのページは、保存した一覧がないときだけ、1 ページずつ順に取得する。写真は、同時に 2 つまで取得して、端末のキャッシュに残す (`ImageLoader`)。名乗る User-Agent (`gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)`) を付ける (`SiteFetch.kt`)。
+- お気に入りは、`filesDir` の `adoption-favorites.json` (`Favorites`。猫の情報ごと保存する。設定の削除では消さない)。カードと一覧は、里親募集とお気に入りで共通 (`CatCards.kt` の `catGrid`)。起動してから初めてお気に入りのタブを開いたときに、猫ごとに詳しいページを取得して、募集が終わった (404、410、状態が「里親募集中」でない) 猫を、灰色にして「譲渡済み」を付ける (`Favorites.checkOnce`、`adoption-favorites-closed.json`)。
+- 猫の一覧は、`filesDir` の `adoption-cats.json` (`CatStore`。キャッシュのフォルダは、システムに消されることがあるので、使わない。ページの HTML は、ページの区切りがずれるので、保存しない)。
 - **サイトの写真と文章を、リポジトリにも、アプリにも、含めない**: 写真は、実行のときに、サイトの URL から取得する。テストの HTML は、サイトと同じ作りの、ダミーにする (実在の猫の名前や写真を書かない)。
 - 開発者は、ニャン友ねっとわーく北海道の関係者で、アプリで一覧と写真を表示することに、問題はない (2026-10-17 に確認)。写真の権利は、ニャン友ねっとわーく北海道にある。
-- サイトは WordPress (Elementor と JetEngine)。里親募集は REST API に出ていないので、HTML を解析する。ページ送りは JetSmartFilters で、次のページは、一覧の固定ページ (`canonical`) に `?jsf=jet-engine&pagenum=N` を付けた URL (`/satooya/` に付けると、転送されず、空の一覧になる)。今のページとページの数は、一覧の部品の `data-page` と `data-pages`。一覧の部品 (`.jet-listing-grid__items`) が見つからなければ、`AdoptionParseException` で失敗にする (サイトの作りが変わったことが、画面のエラーで分かる)。
+- サイトは WordPress (Elementor と JetEngine)。里親募集は REST API に出ていないので、HTML を解析する。ページ送りは JetSmartFilters で、次のページは、一覧の固定ページ (`canonical`) に `?jsf=jet-engine&pagenum=N` を付けた URL (`/satooya/` に付けると、転送されず、空の一覧になる)。今のページとページの数は、一覧の部品の `data-page` と `data-pages`。全ての猫の数は、ページの中のスクリプトの `"found_posts":263` (進み具合の表示に使う)。一覧の部品 (`.jet-listing-grid__items`) が見つからなければ、`AdoptionParseException` で失敗にする (サイトの作りが変わったことが、画面のエラーで分かる)。
 
 ## コーディング規約
 
