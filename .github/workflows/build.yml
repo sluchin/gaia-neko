@@ -21,7 +21,7 @@ on:
 jobs:
   check:
     name: ${{ matrix.service }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -62,7 +62,7 @@ jobs:
 
   docs:
     name: docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout code
@@ -109,7 +109,7 @@ jobs:
     name: Deploy the documentation
     needs: docs
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       pages: write
       id-token: write
@@ -129,7 +129,7 @@ jobs:
   cleanup:
     name: Delete the old runs
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       actions: write
     env:

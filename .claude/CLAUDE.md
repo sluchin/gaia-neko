@@ -46,7 +46,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 - イメージに入った CA はセッションが変わって、プロキシの CA が変わったときは古くなる。TLS のエラーが出たら、`scripts/cloud-docker.sh build` で作り直す。
 - **Maven Central の `429 Too Many Requests`** (共有の出口の IP が回数制限を受ける)。Google のミラー `maven-central.storage-download.googleapis.com` を先に参照する。`scripts/cloud-docker.sh run` がクラウドのときに、毎回、`scripts/maven-mirror.init.gradle.kts` を Gradle のホーム (`/var/cache/gaia-neko-gradle`。`GRADLE_HOME_DIR` で変えられる) の `init.d/` に置く (環境変数も、セットアップスクリプトも、要らない)。ミラーに届かないときは `WARNING` を出す (「Allowed domains」にミラーのドメインを足す)。初期化スクリプトを貼り付けで作ると、全角スペースが混ざって壊れたことがあるので、リポジトリのファイルにした。
 - **Plugin Portal と Maven Central の順**: ミラーに成果物がないと、次の Maven Central が 429 を返し、Gradle は 429 で解決を打ち切る。ktlint のプラグインは Plugin Portal にしかないので、`scripts/maven-mirror.init.gradle.kts` でプラグインの解決の順を「ミラー、`google()`、Plugin Portal」にしている。
-- **Docker Hub の `429`** (ベースのイメージ `ubuntu:24.04` の取得): `scripts/cloud-docker.sh build` が失敗したときは Google のミラー `mirror.gcr.io/library/ubuntu:24.04` から取って、`ubuntu:24.04` のタグを付けてから、ビルドする (スクリプトが自動でする。)。
+- **Docker Hub の `429`** (ベースのイメージ `ubuntu:26.04` の取得): `scripts/cloud-docker.sh build` が失敗したときは Google のミラー `mirror.gcr.io/library/ubuntu:26.04` から取って、`ubuntu:26.04` のタグを付けてから、ビルドする (スクリプトが自動でする。)。
 - 同じ失敗を繰り返さない。Docker を使わずに、VM の上で、直接ビルドする方法も、ある。
 
 ## プロジェクト構成
