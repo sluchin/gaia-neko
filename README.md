@@ -15,7 +15,7 @@ Android app to report stray cat sightings with a photo and GPS location. Photos 
 - **写真の本体は S3 に置く**: DynamoDB の 1 件は 400 KB までなので、写真 (数 MB) は入りません。DynamoDB には位置、時刻、S3 のキーを保存します。
 - **S3 は公開しない**: パブリックアクセスをブロックします。管理者にだけ、署名付きの URL で写真を見せます。
 
-```
+```text
 利用者 ──ログイン──> Cognito ユーザープール ──> Cognito ID プール ──一時的な認証情報──┐
                                                                                       ▼
 Android アプリ ─ 写真 ──────────────────────────────> S3 (gaia-neko 用のバケット)      │
@@ -77,7 +77,7 @@ Android アプリ ─ 写真 ─────────────────
 
 Android Studio は使いません。ビルド、テスト、整形、静的解析、ドキュメントの生成は全てコマンドラインで、Docker の中で実行します。手順は [SETUP.md](SETUP.md) です。
 
-```
+```text
 core/    純粋な Kotlin (Android に依存しない). 単体テストで, 行と分岐のカバレッジ 100%
 app/     Android アプリ. 画面と, 設定の読み込みだけの, 薄い層
 config/  detekt (静的解析) の設定
