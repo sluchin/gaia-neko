@@ -1,6 +1,6 @@
 # AWS の準備
 
-gaia-neko が使う AWS のリソースを AWS CLI で作る手順です。AWS CLI の準備 (IAM ユーザーとアクセスキー、または `aws login`) は [thermon の AWS_CLI.md](https://github.com/sluchin/thermon/blob/main/AWS_CLI.md) と同じです。
+gaia-neko が使う AWS のリソースを AWS CLI で作る手順です。AWS CLI の準備 (IAM ユーザーとアクセスキー、または `aws login`) は [thermon の aws_cli.md](https://github.com/sluchin/thermon/blob/main/AWS_CLI.md) と同じです。
 
 > **注意**: この手順は AWS のドキュメントに基づいています。AWS の画面、料金、サービスの提供状況は変わることがあるので、最新の情報を確認してください。コマンドの結果が違うときはエラーのメッセージを見て、直してください。
 

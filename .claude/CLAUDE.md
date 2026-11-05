@@ -4,7 +4,7 @@ Kotlin で作る Android アプリ (gaia-neko)。外で見つけた猫を利用�
 
 **位置と写真は管理者だけが見られる** (誰でも見られると、猫を虐待しに行く人が出るため)。利用者は書き込みだけができて、読み取りはできない。利用者は Cognito のユーザープールで認証する。管理者はユーザープールのグループ (`admin`) で決める。姉妹プロジェクト [thermon](https://github.com/sluchin/thermon) と、同じ AWS のアカウントを使う (作りも、thermon に合わせる)。
 
-**Android Studio は使わない。** ビルド、テスト、整形、静的解析、ドキュメントの生成は全てコマンドラインで、Docker の中で実行する。環境構築の詳細と、検証の記録は `SETUP.md`。
+**Android Studio は使わない。** ビルド、テスト、整形、静的解析、ドキュメントの生成は全てコマンドラインで、Docker の中で実行する。環境構築の詳細と、検証の記録は `docs/setup.md`。
 
 ## コマンド
 
@@ -12,7 +12,7 @@ Kotlin で作る Android アプリ (gaia-neko)。外で見つけた猫を利用�
 
 ### Docker (推奨)
 - `docker compose run` には必ず `--rm` を付ける (終わったコンテナを残さないため)。
-- `UID` と `GID` をシェルでエクスポートしておく (生成物が root 所有にならないように。`SETUP.md` の「2. ホストのユーザー ID を環境変数にエクスポートする」)。
+- `UID` と `GID` をシェルでエクスポートしておく (生成物が root 所有にならないように。`docs/setup.md` の「2. ホストのユーザー ID を環境変数にエクスポートする」)。
 - イメージのビルド: `docker compose build` (`Dockerfile` を変えたときも)
 - ビルド (デバッグ APK): `docker compose run --rm build` (`app/build/outputs/apk/debug/gaia-neko-<版>-debug.apk`)
 - 単体テスト: `docker compose run --rm test`
@@ -22,14 +22,14 @@ Kotlin で作る Android アプリ (gaia-neko)。外で見つけた猫を利用�
 - ドキュメント (Dokka): `docker compose run --rm docs` (`core/build/dokka/html/index.html`)
 - クリーン: `docker compose run --rm clean` (`build/`、`.gradle/`、`.kotlin/` を消す。Gradle のキャッシュは消さない)
 - 開発シェル: `docker compose run --rm dev`
-- エミュレータ (KVM。`export KVM_GID=$(getent group kvm | cut -d: -f3)` が要る。イメージは約 10.7 GB): `docker compose build emulator` → `docker compose up -d emulator` → `docker compose exec emulator scripts/emulator-wait.sh` → `docker compose exec emulator adb install -r app/build/outputs/apk/debug/gaia-neko-*-debug.apk`。画面は <http://localhost:6080/vnc.html>、画像にするときは `adb exec-out screencap -p > build/emulator-screen.png`。止めるのは `docker compose down` (`SETUP.md` の「エミュレータ (Docker)」) (中で `./gradlew ...` を直接実行できる)
+- エミュレータ (KVM。`export KVM_GID=$(getent group kvm | cut -d: -f3)` が要る。イメージは約 10.7 GB): `docker compose build emulator` → `docker compose up -d emulator` → `docker compose exec emulator scripts/emulator-wait.sh` → `docker compose exec emulator adb install -r app/build/outputs/apk/debug/gaia-neko-*-debug.apk`。画面は <http://localhost:6080/vnc.html>、画像にするときは `adb exec-out screencap -p > build/emulator-screen.png`。止めるのは `docker compose down` (`docs/setup.md` の「エミュレータ (Docker)」) (中で `./gradlew ...` を直接実行できる)
 
 ### 実機への転送 (ホストの adb)
-- `adb install -r app/build/outputs/apk/debug/gaia-neko-*-debug.apk` (ホストに adb を入れる。`SETUP.md` の「実機へのインストール」と「アプリを動かして確認する」)
+- `adb install -r app/build/outputs/apk/debug/gaia-neko-*-debug.apk` (ホストに adb を入れる。`docs/setup.md` の「実機へのインストール」と「アプリを動かして確認する」)
 
 ### クラウドのセッション (claude.ai/code) で Docker を使うとき
 
-**通常の `docker compose build` と `docker compose run` は使わない** (curl の終了コード 60 で失敗する。理由は下)。代わりに、`scripts/cloud-docker.sh` を使う (`SETUP.md` の「クラウドのセッション」)。
+**通常の `docker compose build` と `docker compose run` は使わない** (curl の終了コード 60 で失敗する。理由は下)。代わりに、`scripts/cloud-docker.sh` を使う (`docs/setup.md` の「クラウドのセッション」)。
 
 ```bash
 scripts/cloud-docker.sh build          # 開発用のイメージ (gaia-neko-dev) を作る (プロキシと CA の設定を足す)
@@ -55,7 +55,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 - `app/`: Android。画面 (ログイン、これから: 撮影、管理者のマップ)。更新トークンは `SecureRefreshTokenStore` (Android Keystore の鍵で暗号化) に保存する。画面 (`MainActivity`、`LoginScreen`、`HomeScreen`、管理者の地図 `AdminMapScreen`)。画面は Material Components の View (Compose は使わない。部品を作る関数は `Views.kt`)。地図のピンには、同じ場所の写真の枚数を書く (`PinIcon.kt`)。ログインのあとは、下のタブ (`HomeTabs`) で、撮影と里親募集 (`AdoptionScreen`) を切り替える。地図は osmdroid (OpenStreetMap)。OpenStreetMap のタイルサーバーには利用ポリシーがある (大量のアクセスを避ける。`userAgentValue` を設定する) と、設定の読み込み (`BuildConfig`) だけの、薄い層。ロジックは `core` に置く (UI は単体テストの対象外)。
 - `gradle/libs.versions.toml`: ライブラリとプラグインの版 (版カタログ)。版を変えるときはここだけ。
 - `config/detekt/detekt.yml`: detekt の規則 (既定に上書きするものだけ)。
-- `Dockerfile` (2 段: dev と emulator) / `docker-compose.yml` / `scripts/`: 開発環境 (thermon と同じ)。`.github/`: GitHub Actions。`SETUP.md`: 環境構築。`README.md`: 設計。
+- `Dockerfile` (2 段: dev と emulator) / `docker-compose.yml` / `scripts/`: 開発環境 (thermon と同じ)。`.github/`: GitHub Actions。`docs/setup.md`: 環境構築。`README.md`: 設計。
 
 ## AWS の設定と、秘密情報
 
@@ -69,7 +69,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 - ログは `AppLog` (`AppLog.kt`) だけを使う (`android.util.Log` を直接呼ばない)。タグは、ファイルごとの `private const val TAG` (機能の名前)。
 - `AppLog.d` はデバッグ版だけ出す (判定は、関数の中の `BuildConfig.DEBUG`。引数は、文字列を返す関数にして、リリース版では文字列も作らない)。`AppLog.i` (最低限の情報)、`AppLog.w` (失敗したが続けられる)、`AppLog.e` (利用者の操作が失敗した) は、リリース版でも出す。
 - メールアドレス、パスワード、トークン、確認コードは、どのレベルでも書かない。ログの文字は英語。
-- 落ちたときの例外は、Android が logcat に出し、Google Play では Play Console の Android Vitals が集める (コードは要らない)。見方は `SETUP.md` の「ログを見る」。
+- 落ちたときの例外は、Android が logcat に出し、Google Play では Play Console の Android Vitals が集める (コードは要らない)。見方は `docs/setup.md` の「ログを見る」。
 
 ## メニューと設定
 
@@ -81,7 +81,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 - 里親募集のタブは、[ニャン友ねっとわーく北海道](https://nyantomo.jp/) の里親募集の一覧 (`https://nyantomo.jp/satooya/`。固定ページに転送される) を、カードで並べる。カードを押すと、サイトの詳しいページを、ブラウザで開く。
 - `robots.txt` は、全てを許可している (2026-10-17 に確認)。利用規約と、写真の転載の決まりは、サイトに書かれていない。
-- **仕様は `ADOPTION.md`** (取得のタイミング、保存、新しい猫の探し方、全てのページの取得、更新の操作、失敗、削除、まだ反映しないもの)。里親募集の動きを変えたら、`ADOPTION.md` も直す。
+- **仕様は `docs/adoption.md`** (取得のタイミング、保存、新しい猫の探し方、全てのページの取得、更新の操作、失敗、削除、まだ反映しないもの)。里親募集の動きを変えたら、`docs/adoption.md` も直す。
 - **サイトに負荷をかけない**: 取得するのは、起動してからタブを初めて開いたときと、更新 (更新のボタンと、引き下げ。`SwipeRefreshLayout`) と、設定で削除したあとだけ。普段は、新しい猫を探すだけ (1 ページ目から、新しい猫のいないページで止める。起動後の最初の表示では、足す前に、ダイアログで聞く)。全てのページは、保存した一覧がないときだけ、1 ページずつ順に取得する。写真は、同時に 2 つまで取得して、端末のキャッシュに残す (`ImageLoader`)。名乗る User-Agent (`gaia-neko/0.1 (+https://github.com/sluchin/gaia-neko)`) を付ける (`SiteFetch.kt`)。
 - お気に入りは、`filesDir` の `adoption-favorites.json` (`Favorites`。猫の情報ごと保存する。設定の削除では消さない)。カードと一覧は、里親募集とお気に入りで共通 (`CatCards.kt` の `catGrid`)。起動してから初めてお気に入りのタブを開いたときに、猫ごとに詳しいページを取得して、募集が終わった (404、410、状態が「里親募集中」でない) 猫を、灰色にして「譲渡済み」を付ける (`Favorites.checkOnce`、`adoption-favorites-closed.json`)。
 - 猫の一覧は、`filesDir` の `adoption-cats.json` (`CatStore`。キャッシュのフォルダは、システムに消されることがあるので、使わない。ページの HTML は、ページの区切りがずれるので、保存しない)。
@@ -91,7 +91,7 @@ scripts/cloud-docker.sh start          # Docker のデーモンを起動する (
 
 ## コーディング規約
 
-ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う。迷ったら、ツールが正しい。Kotlin 公式のコーディング規約の日本語訳と、このプロジェクトでの違いは `CODING_STYLE.md`。
+ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う。迷ったら、ツールが正しい。Kotlin 公式のコーディング規約の日本語訳と、このプロジェクトでの違いは `docs/coding_style.md`。
 
 - **インデントは空白 4 つ。1 行は 100 桁まで** (`.editorconfig`)。整形は `format-fix` が行う (手で、整形しない)。
 - **ファイルの先頭に著作権とライセンスを書く**:
@@ -116,7 +116,7 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
 
 ## 開発フロー
 
-1. Push 時に GitHub Actions (`.github/workflows/build.yml`) が開発用の Docker イメージ (ローカルと同じ環境) で `docker compose` のサービスを実行する (`SETUP.md` の「CI (GitHub Actions)」)。
+1. Push 時に GitHub Actions (`.github/workflows/build.yml`) が開発用の Docker イメージ (ローカルと同じ環境) で `docker compose` のサービスを実行する (`docs/setup.md` の「CI (GitHub Actions)」)。
    - `check` ジョブ: `build` / `test` / `coverage` / `format` / `analyze` をサービスごとに実行する。失敗したら、ジョブが失敗する。実行のログをアーティファクト (`<サービス名>_log`。`build_log` など) として保存する (失敗したときも保存する)。`build` のときはデバッグ用の APK (`app/build/outputs/apk/debug/gaia-neko-<版>-debug.apk`。デバッグ鍵で署名) も、アーティファクト `gaia_neko_apk` として保存する (成功したときだけ)。リリース用の署名の鍵 (`*.jks`、`*.keystore`) はリポジトリにも、CI にも、置かない。
    - `docs` ジョブ: `docs` (Dokka の HTML。警告があれば失敗する)。生成したドキュメントをアーティファクト `docs` と、ログ `docs_log` に保存する。
    - `deploy-docs` ジョブ: main への push のときだけ、ドキュメントを GitHub Pages に公開する (リポジトリの Settings > Pages > Source を「GitHub Actions」にしておく)。
@@ -136,9 +136,9 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
   6. `docker compose run --rm build` (APK のビルド)
   7. `docker compose run --rm docs` (ドキュメント。KDoc を変えたときは必ず)
 - ビルドや、テストを実行できなかったときはそのことを報告する (成功したとは書かない)。
-- **例外**: 変更が `SETUP.md`、`README.md`、`.claude/CLAUDE.md` などの文書だけの場合はビルドしない。
-- ビルドやコマンド、ツールの版を変えたら、`SETUP.md` も更新する (版は実際に使うものだけを書く)。
-- ファイルを追加したら、Gradle の設定 (`build.gradle.kts`) と、必要なら、`SETUP.md` の構成も更新する。
+- **例外**: 変更が `docs/setup.md`、`README.md`、`.claude/CLAUDE.md` などの文書だけの場合はビルドしない。
+- ビルドやコマンド、ツールの版を変えたら、`docs/setup.md` も更新する (版は実際に使うものだけを書く)。
+- ファイルを追加したら、Gradle の設定 (`build.gradle.kts`) と、必要なら、`docs/setup.md` の構成も更新する。
 
 ### タスク完了時の動作
 
@@ -155,7 +155,7 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
 - **時刻と乱数**: 外の状態は引数で渡して、固定する (`now` を関数で渡すように)。実際の時計を使う動作は別に 1 つだけ、テストする。
 - **実機と AWS での確認は別に必要**: 実際の AWS への接続 (ユーザープール、ID プール、テーブル、バケット、権限)、カメラと GPS、マップの表示、実機へのインストールは単体テストでは、確認できない (画面を変えたら、実機でも見る)。
 
-## 落とし穴 (検証で分かったこと。詳細は SETUP.md)
+## 落とし穴 (検証で分かったこと。詳細は docs/setup.md)
 
 - `compileSdk` は 37 以上 (AWS SDK が使う OkHttp 5.5 の要求)。`buildToolsVersion` は `37.0.0` に固定する (コンテナの SDK は読み取り専用)。足りない SDK のコンポーネントは `Dockerfile` に足して、イメージを作り直す。
 - 配色は `res/values/colors.xml` と `res/values-night/colors.xml` (アイコンの青緑と橙。ライトとダーク)。Material の部品は `Theme.GaiaNeko` (`Theme.Material3.DayNight`) と `AppCompatActivity` で使う。テーマの色を、コードで読むときは `MaterialColors.getColor` (`colorPrimary` は `androidx.appcompat.R.attr`、そのほかは `com.google.android.material.R.attr`)。
@@ -195,3 +195,4 @@ ktlint (Kotlin 公式のスタイル) と、detekt (既定の規則) に従う�
 ## 開発ルール
 
 - Markdown (`*.md`) の日本語の文章は、句読点に「、」「。」を使う (「,」「.」は使わない)。インラインコード・コードブロック・URL・ファイル名・数値 (`1.2.0`、`1,000`) は対象外。見出しや番号付きリストの「1.」の形は変えない。`docs/` の生成物と、この `CLAUDE.md` は対象外。
+- Markdown (`*.md`。この `CLAUDE.md` を除く) には、AI の目線の記述を書かない。読み手 (人) に向けて、事実、仕様、手順だけを書く。「承認されたら実装します」「教えてください」「提案します」のような、AI からの依頼や約束、作業の報告、「Claude が」のような書き手の記述は、会話で伝えて、ファイルには残さない。

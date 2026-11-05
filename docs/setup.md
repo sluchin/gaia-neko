@@ -1,6 +1,6 @@
 # 環境構築
 
-gaia-neko の、ビルドとテストの手順です。作りは [thermon](https://github.com/sluchin/thermon) の `SETUP.md` と同じです (Docker のイメージ、Gradle、CI)。
+gaia-neko の、ビルドとテストの手順です。作りは [thermon](https://github.com/sluchin/thermon) の `docs/setup.md` と同じです (Docker のイメージ、Gradle、CI)。
 
 ## 1. 必要なもの
 
@@ -49,7 +49,7 @@ adb logcat -s Adoption:D Favorites:D AndroidRuntime:E
 - アプリが落ちたときの例外は、`AndroidRuntime` のタグで出ます。
 - Google Play で公開したら、落ちたときの例外と ANR (応答なし) は、Play Console の「Android Vitals」に集まります (アプリのコードは要りません。利用者が、使用状況と診断情報の送信を許可している端末から、集まります)。リリース版で R8 の難読化を有効にしたら、Play Console に、対応表 (`mapping.txt`) を上げると、例外の場所が読めます。
 
-## 4. AWS の設定 (これから)
+## 4. AWS の設定
 
 接続先は `local.properties` (コミットしない) か、Gradle のプロパティで渡します。
 
@@ -63,7 +63,7 @@ gaianeko.table=gaia-neko-sightings
 gaianeko.bucket=<バケット名>
 ```
 
-実際の ID をリポジトリに書きません。AWS の準備の手順はこれから `AWS_SETUP.md` に書きます。
+実際の ID をリポジトリに書きません。AWS の準備の手順は [aws_setup.md](aws_setup.md) にあります。
 
 ## 5. クラウドのセッション (claude.ai/code)
 

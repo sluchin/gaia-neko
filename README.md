@@ -4,7 +4,7 @@ Android app to report stray cat sightings with a photo and GPS location. Photos 
 
 外で見つけた猫を利用者が撮影して、写真と GPS の位置を AWS に保存する Android アプリです。管理者がアプリの中のマップで、猫の分布を見て、位置に紐づいた写真を取得します。
 
-> **状態**: 雛形です (ビルドの土台と、`core` の位置と Exif の GPS の読み取り)。撮影、ログイン、AWS への保存、管理者のマップはこれから作ります。
+> **状態**: ログイン (Cognito)、撮影と AWS への保存 (S3 と DynamoDB)、管理者のマップ、保護猫の一覧 ([adoption.md](docs/adoption.md)) を実装しています。残りの作業は [TODO.md](TODO.md) にあります。
 
 ## 設計の方針
 
@@ -53,7 +53,7 @@ Android アプリ ─ 写真 ─────────────────
 - カードのハートを押すと、お気に入りに入ります。「お気に入り」のタブに並びます募集が終わった猫は、灰色にして「譲渡済み」の印を付けます。
 - 写真と文章は、アプリにも、リポジトリにも、含めません (実行のときに、サイトから取得します)。開発者は、ニャン友ねっとわーく北海道の関係者です。
 
-取得、保存、更新、削除の決まりは、[ADOPTION.md](docs/adoption.md) にまとめてあります。
+取得、保存、更新、削除の決まりは、[adoption.md](docs/adoption.md) にまとめてあります。
 
 ## メニューと設定
 
@@ -67,8 +67,8 @@ Android アプリ ─ 写真 ─────────────────
 
 1. [x] ビルドの土台 (Docker、Gradle、CI、整形、静的解析、テスト、カバレッジ 100%。[thermon](https://github.com/sluchin/thermon) と同じ)
 2. [x] `core`: 位置 (`GeoPoint`)、Exif の GPS の読み取り (`parseExifGps`)、目撃 (`Sighting`)
-3. [x] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 ([AWS_SETUP.md](docs/aws_setup.md))
-4. [x] 利用者のログイン (Cognito)。`core`: `UserPoolAuth` (登録、確認、ログイン、更新)、`SessionManager` (ログインの状態。更新トークンで、開き直したときに、ログインを飛ばす)、`CognitoLoginCredentials` (ID プールの認証情報)、`Session.isAdmin` (管理者の判定)。`app`: ログインの画面 (メールアドレス、パスワード、登録、確認コード)。更新トークンは Android Keystore の鍵で暗号化して保存する。実際の Cognito での動作は `AWS_SETUP.md` の手順で AWS を作ってから、確認する
+3. [x] AWS の準備 (ユーザープール、ID プール、バケット、テーブル、ロール) の手順 ([aws_setup.md](docs/aws_setup.md))
+4. [x] 利用者のログイン (Cognito)。`core`: `UserPoolAuth` (登録、確認、ログイン、更新)、`SessionManager` (ログインの状態。更新トークンで、開き直したときに、ログインを飛ばす)、`CognitoLoginCredentials` (ID プールの認証情報)、`Session.isAdmin` (管理者の判定)。`app`: ログインの画面 (メールアドレス、パスワード、登録、確認コード)。更新トークンは Android Keystore の鍵で暗号化して保存する。実際の Cognito での動作は `docs/aws_setup.md` の手順で AWS を作ってから、確認する
 5. [x] 撮影と保存。`core`: `SightingUploader` (写真を S3 に先に保存して、目撃を DynamoDB に保存する)。`app`: カメラのアプリを起動して撮影、写真の Exif の GPS (なければ、端末の最後の位置)、位置の権限
 6. [x] 管理者のマップ。`core`: `DynamoDbSightingSource` (全員の目撃を読む)、`S3PhotoSource` (写真を読む)、`boundsOf` (全てが見える範囲)。`app`: OpenStreetMap の地図 (osmdroid。API キーは要らない) にピンで表示して、同じ場所 (約 11 m 以内) の目撃は 1 つのピンにまとめる。ピンを押すと、写真、撮影日時、位置 (緯度、経度)、撮影者を表示して、左右にスワイプすると、同じ場所のほかの写真を見られる。写真を長押しすると、確認のあと、その写真と記録を削除する (管理者だけ)。管理者 (グループ `admin`) だけに、ボタンが出る。読み取りの権限は IAM のロールが決める (利用者は読めない)。実際の AWS、カメラ、地図の表示は実機で確認する
 7. [x] 里親募集のタブ。`core`: `parseAdoptionPage` (一覧のページの HTML の解析。jsoup)、`newAdoptionCats` (新しい猫)。`app`: 画面の下のタブ、カードの一覧、一覧の保存と新しい猫の追加、写真の取得 (端末にキャッシュ)、カードを押すとサイトを開く
@@ -77,7 +77,7 @@ Android アプリ ─ 写真 ─────────────────
 
 ## 開発環境
 
-Android Studio は使いません。ビルド、テスト、整形、静的解析、ドキュメントの生成は全てコマンドラインで、Docker の中で実行します。手順は [SETUP.md](docs/setup.md) です。
+Android Studio は使いません。ビルド、テスト、整形、静的解析、ドキュメントの生成は全てコマンドラインで、Docker の中で実行します。手順は [setup.md](docs/setup.md) です。
 
 ```text
 core/    純粋な Kotlin (Android に依存しない). 単体テストで, 行と分岐のカバレッジ 100%
