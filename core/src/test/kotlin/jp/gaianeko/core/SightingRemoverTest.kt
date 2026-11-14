@@ -31,7 +31,7 @@ class SightingRemoverTest {
             )
         }
 
-    /** 目撃を消せなければ, 写真は消さない. */
+    /** 目撃を消せなければ写真は消さない. */
     @Test
     fun removeKeepsThePhotoWhenTheSightingFails() =
         runTest {

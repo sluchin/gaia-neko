@@ -62,13 +62,13 @@ class SightingGroupTest {
         )
     }
 
-    /** 目撃がなければ, まとまりもない. */
+    /** 目撃がなければまとまりもない. */
     @Test
     fun noSightingsNoGroups() {
         assertEquals(emptyList(), groupByPlace(emptyList()))
     }
 
-    /** データクラスの, 比較, 複製, 分解が, 使える. */
+    /** データクラスの比較, 複製, 分解が使える. */
     @Test
     fun dataClassFeatures() {
         val group = SightingGroup(GeoPoint(1.0, 2.0), emptyList())

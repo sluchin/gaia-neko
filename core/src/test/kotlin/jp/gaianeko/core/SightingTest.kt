@@ -26,7 +26,7 @@ class SightingTest {
         assertEquals(a, a.copy())
     }
 
-    /** データクラスの, 文字列, 複製, 分解が, 使える. */
+    /** データクラスの文字列, 複製, 分解が使える. */
     @Test
     fun dataClassFeatures() {
         val sighting = Sighting("s-1", "user-1", GeoPoint(1.0, 2.0), 1000, "photos/user-1/s-1.jpg")

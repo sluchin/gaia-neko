@@ -31,7 +31,7 @@ private const val CONTENT_PADDING_DP = 16
  * @param home 猫情報提供 (撮影) のタブの中身
  * @param adoption 里親募集の画面 (画面を作り直しても, 取得した一覧を使い回す)
  * @param favorites お気に入り (タブを開いたときに, 募集が終わったかを確かめる)
- * @param favoritesView お気に入りの画面 (画面を作り直しても, 使い回す)
+ * @param favoritesView お気に入りの画面 (画面を作り直しても使い回す)
  */
 class HomeTabs(
     context: Context,

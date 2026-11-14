@@ -59,7 +59,7 @@ class SessionManagerTest {
             assertEquals("refresh", store.token)
         }
 
-    /** 保存した更新トークンがあれば, 取り直して, ログインの状態に戻す. */
+    /** 保存した更新トークンがあれば, 取り直してログインの状態に戻す. */
     @Test
     fun restoreRefreshesWithTheSavedToken() =
         runTest {
@@ -135,7 +135,7 @@ class SessionManagerTest {
             assertEquals("Not signed in", error.message)
         }
 
-    /** 更新トークンの期限が切れていれば, ログアウトして, 例外. */
+    /** 更新トークンの期限が切れていれば, ログアウトして例外. */
     @Test
     fun idTokenWithAnExpiredRefreshToken() =
         runTest {

@@ -18,7 +18,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-/** 期限の何分前から, 認証情報を取り直すか. */
+/** 期限の何分前から認証情報を取り直すか. */
 private val REFRESH_BEFORE_EXPIRY: Duration = 5.minutes
 
 /**
@@ -26,13 +26,13 @@ private val REFRESH_BEFORE_EXPIRY: Duration = 5.minutes
  *
  * Cognito のユーザープールの ID トークンを, ID プールに渡して, ID (GetId) と, 認証情報
  * (GetCredentialsForIdentity) を受け取る. 管理者のグループに入っていれば, 管理者のロールの認証情報になる.
- * ID は, 最初の 1 回だけ取り, 認証情報は, 期限の 5 分前まで, 使い回す. 同時に呼ばれても, 取得は 1 回にする.
+ * ID は, 最初の 1 回だけ取り, 認証情報は, 期限の 5 分前まで使い回す. 同時に呼ばれても取得は 1 回にする.
  *
  * @property client Cognito Identity のクライアント
  * @property identityPoolId ID プールの ID
  * @property loginKey ID プールに渡す, ユーザープールの名前 (cognito-idp.リージョン.amazonaws.com/ユーザープール ID)
- * @property idToken 有効な ID トークンを返す関数 (期限が切れていれば, 取り直して返す)
- * @property now 今の時刻を返す関数 (テストで, 差し替える)
+ * @property idToken 有効な ID トークンを返す関数 (期限が切れていれば取り直して返す)
+ * @property now 今の時刻を返す関数 (テストで差し替える)
  */
 class CognitoLoginCredentials(
     private val client: CognitoIdentityClient,
@@ -73,7 +73,7 @@ class CognitoLoginCredentials(
         }
 
     /**
-     * ID を返す (取っていなければ, 取る). ロックを, 取った状態で呼ぶ.
+     * ID を返す (取っていなければ取る). ロックを, 取った状態で呼ぶ.
      *
      * @return ID
      * @throws IllegalStateException Cognito の応答に, ID がないとき
@@ -82,7 +82,7 @@ class CognitoLoginCredentials(
         cachedIdentityId ?: fetchIdentityId().also { cachedIdentityId = it }
 
     /**
-     * Cognito から, 認証情報を受け取る.
+     * Cognito から認証情報を受け取る.
      *
      * @return 認証情報と, その期限
      * @throws IllegalStateException Cognito の応答に, 必要な項目がないとき

@@ -28,7 +28,7 @@ import kotlin.test.assertEquals
 
 /** [S3PhotoStore] と [DynamoDbSightingStore] の単体テスト (AWS のクライアントは, 偽物). */
 class SightingStoresTest {
-    /** 写真は, バケット, キー, Content-Type, 中身を指定して, S3 に置く. */
+    /** 写真は, バケット, キー, Content-Type, 中身を指定して S3 に置く. */
     @Test
     fun s3PutsTheJpeg() =
         runTest {
@@ -44,7 +44,7 @@ class SightingStoresTest {
             assertContentEquals(byteArrayOf(1, 2, 3), request.captured.body?.toByteArray())
         }
 
-    /** 目撃は, 全ての項目を, 上書きしない条件で, DynamoDB に書く. */
+    /** 目撃は, 全ての項目を, 上書きしない条件で DynamoDB に書く. */
     @Test
     fun dynamoDbPutsTheSighting() =
         runTest {
@@ -72,7 +72,7 @@ class SightingStoresTest {
             assertEquals(mapOf("#id" to "id"), request.captured.expressionAttributeNames)
         }
 
-    /** 撮影者がいれば, 項目に加えて書く. */
+    /** 撮影者がいれば項目に加えて書く. */
     @Test
     fun dynamoDbPutsThePhotographer() =
         runTest {

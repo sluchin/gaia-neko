@@ -61,7 +61,7 @@ class ExifGpsTest {
         assertNull(parseExifCoordinate("10/0,30/1,0/1", "N"))
     }
 
-    /** 緯度と経度が読めれば, 位置になる. */
+    /** 緯度と経度が読めれば位置になる. */
     @Test
     fun gpsBuildsThePoint() {
         val point = assertNotNull(parseExifGps(LAT, "N", LON, "E"))

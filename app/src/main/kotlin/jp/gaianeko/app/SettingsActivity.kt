@@ -26,9 +26,9 @@ private const val TAG = "Settings"
 private const val GAP_DP = 12
 
 /**
- * 設定の画面 (ドロワーから開く. 上の矢印か, 戻るで, 閉じる).
+ * 設定の画面 (ドロワーから開く. 上の矢印か, 戻るで閉じる).
  *
- * 保存したデータ (里親募集の一覧と写真) の容量を表示して, 削除できる. 削除したら, 結果を
+ * 保存したデータ (里親募集の一覧と写真) の容量を表示して削除できる. 削除したら, 結果を
  * [android.app.Activity.RESULT_OK] にして, 前の画面 ([MainActivity]) に, 里親募集の一覧を, 捨てさせる.
  */
 class SettingsActivity : AppCompatActivity() {
@@ -84,7 +84,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     /**
-     * 上の矢印で, 閉じる.
+     * 上の矢印で閉じる.
      *
      * @return 処理したので, true
      */
@@ -112,7 +112,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    /** 削除してよいかを聞いて, よければ, 削除する. */
+    /** 削除してよいかを聞いて, よければ削除する. */
     private fun confirmClear() {
         MaterialAlertDialogBuilder(this)
             .setMessage(R.string.settings_clear_confirm)

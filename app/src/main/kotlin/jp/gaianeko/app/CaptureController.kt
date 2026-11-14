@@ -64,7 +64,7 @@ class CaptureController(
 ) {
     private val file = File(File(activity.cacheDir, IMAGES_DIR), CAPTURE_FILE)
 
-    /** 撮影を始める (位置の権限がなければ, 先に求める). */
+    /** 撮影を始める (位置の権限がなければ先に求める). */
     fun start() {
         if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
@@ -82,7 +82,7 @@ class CaptureController(
     }
 
     /**
-     * 位置の権限の結果を受け取る (許可されたら, カメラを起動する).
+     * 位置の権限の結果を受け取る (許可されたらカメラを起動する).
      *
      * @param requestCode 要求の番号
      * @param grantResults 権限ごとの結果
@@ -102,7 +102,7 @@ class CaptureController(
     }
 
     /**
-     * カメラの結果を受け取る (撮影できていれば, 位置を求めて, 保存する).
+     * カメラの結果を受け取る (撮影できていれば位置を求めて保存する).
      *
      * @param requestCode 要求の番号
      * @param resultCode 結果 (撮影できたときは, RESULT_OK)
@@ -157,7 +157,7 @@ class CaptureController(
     }
 
     /**
-     * 撮影した位置を求める (写真の Exif の GPS. なければ, 端末の最後の位置).
+     * 撮影した位置を求める (写真の Exif の GPS. なければ端末の最後の位置).
      *
      * @return 位置. 求められないときは, null
      */

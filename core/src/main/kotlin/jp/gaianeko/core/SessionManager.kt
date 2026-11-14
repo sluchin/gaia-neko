@@ -38,7 +38,7 @@ interface RefreshTokenStore {
  *
  * @property auth ユーザープールの操作
  * @property store 更新トークンの保存先
- * @property now 今の時刻 (UNIX 時刻 (s)) を返す関数 (テストで, 差し替える)
+ * @property now 今の時刻 (UNIX 時刻 (s)) を返す関数 (テストで差し替える)
  */
 class SessionManager(
     private val auth: UserPoolAuth,
@@ -71,7 +71,7 @@ class SessionManager(
     suspend fun restore(): Session? = mutex.withLock { store.load()?.let { refreshLocked(it) } }
 
     /**
-     * 有効な ID トークンを返す (期限が近ければ, 取り直す).
+     * 有効な ID トークンを返す (期限が近ければ取り直す).
      *
      * @return ID トークン
      * @throws IllegalStateException ログインしていない, または, 更新トークンの期限が切れているとき

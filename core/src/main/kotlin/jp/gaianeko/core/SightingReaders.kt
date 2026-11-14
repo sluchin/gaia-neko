@@ -70,7 +70,7 @@ class DynamoDbSightingSource(
 /**
  * DynamoDB の 1 件を, [Sighting] にする.
  *
- * どれかの項目がない, 数として読めない, 位置が範囲の外のときは, null (その項目は, 除く).
+ * どれかの項目がない, 数として読めない, 位置が範囲の外のときは null (その項目は除く).
  *
  * @param item DynamoDB の 1 件
  * @return 目撃. 読めないときは, null

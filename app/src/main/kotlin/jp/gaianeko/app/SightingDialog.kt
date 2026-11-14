@@ -35,7 +35,7 @@ private const val GAP_DP = 8
 private const val SIDE_DP = 24
 
 /**
- * 同じ場所の写真を, 1 枚ずつ表示するダイアログ (左右にスワイプして, 次々に見る. 写真を長押しすると, 削除する).
+ * 同じ場所の写真を, 1 枚ずつ表示するダイアログ (左右にスワイプして次々に見る. 写真を長押しすると, 削除する).
  *
  * @property context コンテキスト (画面)
  * @property scope コルーチンのスコープ (画面のスレッドで動く)
@@ -107,7 +107,7 @@ class SightingDialog(
         }
     }
 
-    /** 今の目撃の, タイトル (撮影日時), 何枚目か (1 / 3 の形), 位置, 撮影者を表示して, 写真を取得して表示する. */
+    /** 今の目撃のタイトル (撮影日時), 何枚目か (1 / 3 の形), 位置, 撮影者を表示して, 写真を取得して表示する. */
     private fun showCurrent() {
         val sighting = sightings[index]
         dialog.setTitle(formatTakenAt(sighting.takenAt, ZoneId.systemDefault()))
@@ -144,7 +144,7 @@ class SightingDialog(
             .show()
     }
 
-    /** 今の写真と目撃を削除する (成功したら, 次の写真を表示する. 全て削除したら, ダイアログを閉じる). */
+    /** 今の写真と目撃を削除する (成功したら次の写真を表示する. 全て削除したらダイアログを閉じる). */
     private fun remove() {
         val sighting = sightings[index]
         scope.launch {

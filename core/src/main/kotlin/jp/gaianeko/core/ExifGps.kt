@@ -18,7 +18,7 @@ private const val SECONDS_PER_DEGREE = 3600.0
 /**
  * Exif の GPS の座標 (度, 分, 秒) を, 度の小数にする.
  *
- * Exif の座標は, 「35/1,39/1,2975/100」のように, 分数を, コンマで 3 つ並べた文字列 (度, 分, 秒).
+ * Exif の座標は, 「35/1,39/1,2975/100」のように分数をコンマで 3 つ並べた文字列 (度, 分, 秒).
  * 向きは, 北緯 (N) と東経 (E) が正, 南緯 (S) と西経 (W) が負.
  *
  * @param value 座標の文字列 (度, 分, 秒の分数をコンマで区切る)
@@ -39,7 +39,7 @@ fun parseExifCoordinate(
 }
 
 /**
- * 向きから, 符号を求める.
+ * 向きから符号を求める.
  *
  * @param ref 向き (N, S, E, W のどれか)
  * @return 北と東は 1, 南と西は -1. それ以外 (ないときを含む) は, null
@@ -55,7 +55,7 @@ private fun signOf(ref: String?): Double? =
  * 「度,分,秒」(それぞれ, 分数) の文字列を, 3 つの小数にする.
  *
  * @param value 座標の文字列
- * @return 度, 分, 秒の 3 つの小数. 項目が 3 つでない, または, どれかが読めないときは, null
+ * @return 度, 分, 秒の 3 つの小数. 項目が 3 つでないか, どれかが読めないときは null
  */
 private fun parseDms(value: String): List<Double>? {
     val items = value.split(",")

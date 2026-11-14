@@ -90,7 +90,7 @@ class CognitoLoginCredentialsTest {
     private suspend fun resolveFailure(): IllegalStateException =
         assertFailsWith<IllegalStateException> { provider.resolve(emptyAttributes()) }
 
-    /** ID トークンを渡して, ID と認証情報を取る. */
+    /** ID トークンを渡して ID と認証情報を取る. */
     @Test
     fun resolveSendsTheLogins() =
         runTest {
@@ -113,7 +113,7 @@ class CognitoLoginCredentialsTest {
             assertEquals(mapOf(LOGIN_KEY to "token-1"), credentialsRequest.captured.logins)
         }
 
-    /** ID は, 取っていれば, 再び取らない (利用者の識別子として, 返せる). */
+    /** ID は, 取っていれば, 再び取らない (利用者の識別子として返せる). */
     @Test
     fun identityIdIsFetchedOnce() =
         runTest {
@@ -161,7 +161,7 @@ class CognitoLoginCredentialsTest {
             }
         }
 
-    /** 同時に呼ばれても, 取得は 1 回だけで, 同じ認証情報を返す. */
+    /** 同時に呼ばれても, 取得は 1 回だけで同じ認証情報を返す. */
     @Test
     fun resolveFetchesOnceForConcurrentCalls() =
         runTest {
@@ -221,7 +221,7 @@ class CognitoLoginCredentialsTest {
             }
         }
 
-    /** 時計を渡さないときは, 実際の時計で, 期限を調べる. */
+    /** 時計を渡さないときは, 実際の時計で期限を調べる. */
     @Test
     fun resolveUsesTheSystemClockByDefault() =
         runTest {

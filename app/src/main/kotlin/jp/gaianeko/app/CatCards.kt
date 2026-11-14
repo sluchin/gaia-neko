@@ -39,7 +39,7 @@ private val GRAY = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f
  * お気に入りは, 灰色にして, 「譲渡済み」の印を付ける.
  *
  * @receiver コンテキスト
- * @param cats 猫 (アダプタが, そのまま使う. 変えたら, アダプタに知らせる)
+ * @param cats 猫 (アダプタが, そのまま使う. 変えたらアダプタに知らせる)
  * @param images 写真の読み込み
  * @param favorites お気に入り
  * @return 一覧と, そのアダプタ
@@ -71,7 +71,7 @@ fun Context.catGrid(
  * @param context コンテキスト
  * @property cats 猫
  * @property images 写真の読み込み
- * @property favorites お気に入り (ハートのボタンで, 足し引きする)
+ * @property favorites お気に入り (ハートのボタンで足し引きする)
  */
 private class CatAdapter(
     context: Context,

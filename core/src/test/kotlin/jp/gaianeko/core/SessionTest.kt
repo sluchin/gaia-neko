@@ -59,7 +59,7 @@ class SessionTest {
         assertFalse(none.isAdmin)
     }
 
-    /** データクラスの, 比較, 文字列, 複製, 分解が, 使える. */
+    /** データクラスの比較, 文字列, 複製, 分解が使える. */
     @Test
     fun dataClassFeatures() {
         val session = Session("id", "access", "refresh", 5)

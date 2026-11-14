@@ -19,14 +19,14 @@ class GeoPointTest {
         assertEquals(180.0, GeoPoint(90.0, 180.0).longitude)
     }
 
-    /** 緯度が範囲の外 (NaN を含む) なら, 作れない. */
+    /** 緯度が範囲の外 (NaN を含む) なら作れない. */
     @Test
     fun rejectsLatitudeOutOfRange() {
         assertFailsWith<IllegalArgumentException> { GeoPoint(90.1, 0.0) }
         assertFailsWith<IllegalArgumentException> { GeoPoint(Double.NaN, 0.0) }
     }
 
-    /** 経度が範囲の外なら, 作れない. */
+    /** 経度が範囲の外なら作れない. */
     @Test
     fun rejectsLongitudeOutOfRange() {
         assertFailsWith<IllegalArgumentException> { GeoPoint(0.0, -180.1) }

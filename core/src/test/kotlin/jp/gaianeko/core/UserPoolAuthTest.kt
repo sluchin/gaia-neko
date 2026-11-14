@@ -95,7 +95,7 @@ class UserPoolAuthTest {
             assertEquals("123456", request.captured.confirmationCode)
         }
 
-    /** ログインは, パスワードで認証して, トークンと期限を返す. */
+    /** ログインは, パスワードで認証してトークンと期限を返す. */
     @Test
     fun signInReturnsTheSession() =
         runTest {
@@ -159,7 +159,7 @@ class UserPoolAuthTest {
             }
         }
 
-    /** 時計を渡さないときは, 実際の時計で, 期限を求める. */
+    /** 時計を渡さないときは, 実際の時計で期限を求める. */
     @Test
     fun signInUsesTheSystemClockByDefault() =
         runTest {

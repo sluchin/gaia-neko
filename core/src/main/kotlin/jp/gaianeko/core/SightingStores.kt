@@ -66,7 +66,7 @@ interface PhotoStore {
 /** 目撃を保存する入り口 (AWS では DynamoDB. テストでは, 偽物). */
 interface SightingStore {
     /**
-     * 目撃を保存する (すでに, 同じ目撃があれば, 失敗する).
+     * 目撃を保存する (すでに, 同じ目撃があれば失敗する).
      *
      * @param sighting 目撃
      */

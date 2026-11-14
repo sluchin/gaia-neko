@@ -176,7 +176,7 @@ class AdoptionTest {
         assertEquals(listOf(null, null), cats.map { it.imageUrl })
     }
 
-    /** 一覧はあるが, 猫がいなければ, 空. */
+    /** 一覧はあるが, 猫がいなければ空. */
     @Test
     fun parseAdoptionPageOfEmptyList() {
         assertEquals(emptyList(), catsOf(page()))
@@ -282,7 +282,7 @@ class AdoptionTest {
         )
     }
 
-    /** ページのデータクラスの, 文字列, 複製, 分解が, 使える. */
+    /** ページのデータクラスの文字列, 複製, 分解が使える. */
     @Test
     fun pageDataClassFeatures() {
         val page = AdoptionPage(emptyList(), "https://example.com/", 1)
@@ -299,7 +299,7 @@ class AdoptionTest {
         )
     }
 
-    /** データクラスの, 文字列, 複製, 分解が, 使える. */
+    /** データクラスの文字列, 複製, 分解が使える. */
     @Test
     fun dataClassFeatures() {
         val cat = AdoptionCat("タマ", "約1歳", "メス", "里親募集中", "https://example.com/", null)

@@ -18,7 +18,7 @@ private const val PAGE_QUERY = "?jsf=jet-engine&pagenum="
 /** 一覧の, 全ての猫の数 (JetSmartFilters が, ページの中のスクリプトに書く `found_posts`). */
 private val FOUND_POSTS = Regex(""""found_posts":(\d+)""")
 
-/** 里親を募集している猫の, 状態の文字 (この文字で始まれば, 募集している). */
+/** 里親を募集している猫の, 状態の文字 (この文字で始まれば募集している). */
 private const val STATUS_OPEN = "里親募集中"
 
 /** 一覧の項目の, 名前の見出し. */
@@ -77,7 +77,7 @@ class AdoptionParseException(
  * 里親募集の一覧のページ (HTML) から, 猫と, 次のページの URL を読み出す.
  *
  * ページは, WordPress (Elementor と JetEngine) の一覧. 1 匹ごとの項目に, 写真, 詳細のページへのリンク,
- * 「名前」「年齢」「性別」の見出しと, その次の値, 状態がある. 名前か, リンクのない項目は, 飛ばす.
+ * 「名前」「年齢」「性別」の見出しと, その次の値, 状態がある. 名前かリンクのない項目は飛ばす.
  * 一覧の部品の `data-page` と `data-pages` が, 今のページと, ページの数. 次のページは, 一覧の固定ページ
  * (`canonical` のリンク. なければ, [baseUrl]) に, ページの番号の問い合わせを付けた URL. 全ての猫の数は,
  * ページの中のスクリプトの `"found_posts":263` のような値.

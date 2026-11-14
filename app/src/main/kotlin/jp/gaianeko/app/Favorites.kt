@@ -82,7 +82,7 @@ class Favorites(
     fun isClosed(url: String): Boolean = url in closed
 
     /**
-     * お気に入りに足す (お気に入りなら, 外す). 保存して, 変わったことを知らせる.
+     * お気に入りに足す (お気に入りなら外す). 保存して, 変わったことを知らせる.
      *
      * @param cat 猫
      */
@@ -152,7 +152,7 @@ class Favorites(
     /**
      * 保存した, 募集が終わった猫の URL を読む (IO のスレッドで呼ぶ).
      *
-     * @return URL (保存していないか, 読めなければ, 空)
+     * @return URL (保存していないか, 読めなければ空)
      */
     private fun readClosed(): List<String> {
         if (!closedFile.exists()) {

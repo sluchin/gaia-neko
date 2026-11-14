@@ -53,7 +53,7 @@ private const val GAP_DP = 8
  * @property scope コルーチンのスコープ (画面のスレッドで動く)
  * @property sightings 目撃の読み出し
  * @property photos 写真の読み出し
- * @property remover 目撃と写真の削除 (写真を長押しして, 削除する)
+ * @property remover 目撃と写真の削除 (写真を長押しして削除する)
  * @param onClose 閉じるを押したとき
  */
 class AdminMapScreen(
@@ -120,7 +120,7 @@ class AdminMapScreen(
     /** 画面を閉じるとき (地図の資源を解放する). */
     fun onDestroy() = map.onDetach()
 
-    /** 目撃を読み出して, ピンを置く (失敗したら, メッセージを表示する). */
+    /** 目撃を読み出して, ピンを置く (失敗したらメッセージを表示する). */
     fun load() {
         status.text = context.getString(R.string.loading)
         scope.launch {
@@ -152,7 +152,7 @@ class AdminMapScreen(
     }
 
     /**
-     * 同じ場所の目撃の, ピンを置く (ピンに, 写真の枚数を書く. タップすると, 写真を, 次々に見られる.
+     * 同じ場所の目撃のピンを置く (ピンに写真の枚数を書く. タップすると, 写真を次々に見られる.
      * 全て削除すると, ピンを消す).
      *
      * @param group 同じ場所の目撃

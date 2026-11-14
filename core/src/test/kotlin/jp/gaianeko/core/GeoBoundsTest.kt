@@ -22,7 +22,7 @@ class GeoBoundsTest {
         assertEquals(GeoBounds(-5.0, 10.0, -1.0, 30.0), bounds)
     }
 
-    /** 位置が 1 つなら, 幅のない長方形になる. */
+    /** 位置が 1 つなら幅のない長方形になる. */
     @Test
     fun boundsOfOnePoint() {
         assertEquals(GeoBounds(1.0, 1.0, 2.0, 2.0), boundsOf(listOf(GeoPoint(1.0, 2.0))))
@@ -41,7 +41,7 @@ class GeoBoundsTest {
         assertEquals("2026-10-11 15:30:00", formatTakenAt(1791700200, ZoneId.of("Asia/Tokyo")))
     }
 
-    /** データクラスの, 文字列, 複製, 分解が, 使える. */
+    /** データクラスの文字列, 複製, 分解が使える. */
     @Test
     fun dataClassFeatures() {
         val bounds = GeoBounds(1.0, 2.0, 3.0, 4.0)

@@ -62,7 +62,7 @@ class SightingUploaderTest {
     private fun uploader(recorder: Recorder) =
         SightingUploader(recorder, recorder, { "user-1" }, newId = { "s-1" })
 
-    /** 写真を先に保存して, 次に, 目撃を保存する. 目撃には, 利用者, 位置, 時刻, 写真のキーが入る. */
+    /** 写真を先に保存してから, 目撃を保存する. 目撃には, 利用者, 位置, 時刻, 写真のキーが入る. */
     @Test
     fun uploadSavesThePhotoFirst() =
         runTest {

@@ -29,7 +29,7 @@ private const val PARAM_REFRESH_TOKEN = "REFRESH_TOKEN"
  *
  * @property client Cognito Identity Provider のクライアント
  * @property clientId アプリクライアントの ID
- * @property now 今の時刻 (UNIX 時刻 (s)) を返す関数 (テストで, 差し替える)
+ * @property now 今の時刻 (UNIX 時刻 (s)) を返す関数 (テストで差し替える)
  */
 class UserPoolAuth(
     private val client: CognitoIdentityProviderClient,
@@ -103,7 +103,7 @@ class UserPoolAuth(
         )
 
     /**
-     * 認証して, トークンを受け取る.
+     * 認証してトークンを受け取る.
      *
      * @param flow 認証の流れ
      * @param parameters 認証のパラメータ

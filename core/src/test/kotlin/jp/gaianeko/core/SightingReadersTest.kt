@@ -75,7 +75,7 @@ class SightingReadersTest {
         assertNull(toSighting(item() - "longitude"))
     }
 
-    /** 続きがあれば, 続きを読み出して, 新しい順にまとめる. 読めない項目は, 除く. */
+    /** 続きがあれば, 続きを読み出して新しい順にまとめる. 読めない項目は, 除く. */
     @Test
     fun allFollowsThePagesAndSortsNewestFirst() =
         runTest {
@@ -102,7 +102,7 @@ class SightingReadersTest {
             assertEquals("table-1", request.captured.tableName)
         }
 
-    /** 項目が, 応答にないときも, 空の一覧になる. */
+    /** 項目が, 応答にないときも空の一覧になる. */
     @Test
     fun allWithoutItems() =
         runTest {
@@ -155,7 +155,7 @@ class SightingReadersTest {
             assertEquals("S3 did not return the photo", error.message)
         }
 
-    /** 撮影者の項目があれば, 読む. */
+    /** 撮影者の項目があれば読む. */
     @Test
     fun toSightingReadsThePhotographer() {
         val sighting = toSighting(item() + ("photographer" to AttributeValue.S("a@example.com")))
