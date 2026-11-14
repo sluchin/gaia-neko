@@ -141,7 +141,9 @@ class CaptureController(
         val intent =
             Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                 .putExtra(MediaStore.EXTRA_OUTPUT, uri)
-                .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                .addFlags(
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
         activity.startActivityForResult(intent, REQUEST_CAMERA)
     }
 
