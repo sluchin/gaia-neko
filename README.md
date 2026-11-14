@@ -26,7 +26,7 @@ Android アプリ ─ 写真 ─────────────────
 ### 権限 (最小権限)
 
 | 役割 | S3 | DynamoDB |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | 利用者 | `PutObject` (自分の `photos/<自分の ID>/` だけ) | `PutItem` (パーティションキー `userId` が自分の分だけ) |
 | 管理者 | `GetObject`、`DeleteObject`、`PutObject` (自分の `photos/<自分の ID>/` だけ) | `Query` / `Scan`、`DeleteItem`、`PutItem` (自分の分だけ) |
 
@@ -35,7 +35,7 @@ Android アプリ ─ 写真 ─────────────────
 ### データ (DynamoDB のテーブル gaia-neko-sightings)
 
 | 項目 | 内容 |
-|:---|:---|
+| :--- | :--- |
 | `userId` | 撮影した利用者 (Cognito の ID プールの ID。パーティションキー。権限を自分の分だけに絞るため) |
 | `id` | 目撃の識別子 (UUID。ソートキー) |
 | `latitude` / `longitude` | 位置 (度)。写真の Exif の GPS。なければ、撮影のときの端末の位置 |

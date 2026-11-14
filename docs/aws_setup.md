@@ -7,7 +7,7 @@ gaia-neko が使う AWS のリソースを AWS CLI で作る手順です。AWS C
 ## 1. 作るもの
 
 | リソース | 名前 | 役割 |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | DynamoDB のテーブル | `gaia-neko-sightings` | 位置、時刻、写真のキー |
 | S3 のバケット | `gaia-neko-photos-<アカウント ID>` | 写真の本体 (公開しない) |
 | Cognito のユーザープール | `gaia-neko` | 利用者のログイン (メールアドレス) |
@@ -262,7 +262,7 @@ aws cognito-identity get-credentials-for-identity --identity-id "$IDENTITY_ID" \
 出力の `AccessKeyId`、`SecretKey`、`SessionToken` を環境変数 (`AWS_ACCESS_KEY_ID`、`AWS_SECRET_ACCESS_KEY`、`AWS_SESSION_TOKEN`) に入れて、次を実行します (別のシェルで行うと、元の認証情報に影響しません)。
 
 | 試すこと | コマンド | 期待する結果 |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | 利用者が自分の写真を置く | `aws s3api put-object --bucket "$BUCKET" --key "photos/${IDENTITY_ID}/test.jpg" --body <ファイル>` | 成功 |
 | 利用者が他人の場所に置く | 上の `--key` の `${IDENTITY_ID}` を別の文字列にする | `AccessDenied` |
 | 利用者が写真を読む | `aws s3api get-object --bucket "$BUCKET" --key "photos/${IDENTITY_ID}/test.jpg" /dev/null` | `AccessDenied` |
