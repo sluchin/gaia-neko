@@ -1,11 +1,11 @@
 [versions]
-agp = "9.5.1"
+agp = "9.5.2"
 kotlin = "2.4.21"
 ktlintPlugin = "14.2.0"
 detekt = "1.23.8"
 dokka = "2.3.0"
 junit = "6.1.3"
-awsSdk = "1.9.32"
+awsSdk = "1.9.43"
 androidxCore = "1.19.1"
 material = "1.14.0"
 appcompat = "1.8.0"
